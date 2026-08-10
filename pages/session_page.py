@@ -57,12 +57,23 @@ class SessionPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
+        self.new_session_button = QPushButton("New Session")
+        self.new_session_button.setObjectName("ghostButton")
+        self.new_session_button.setCursor(Qt.PointingHandCursor)
+        self.new_session_button.clicked.connect(self.create_session)
+        layout.addWidget(self.new_session_button, alignment=Qt.AlignLeft)
+
         self.session_list = QListWidget()
         self.session_list.setObjectName("sessionList")
         self.session_list.setSelectionMode(QListWidget.NoSelection)
         layout.addWidget(self.session_list)
 
         self.reload()
+
+    def create_session(self):
+        data = self.store.create()
+        self.reload()
+        self.on_open(data["id"])
 
     def reload(self):
         self.session_list.clear()
