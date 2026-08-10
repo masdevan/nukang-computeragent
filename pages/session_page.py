@@ -4,35 +4,11 @@ from PySide6.QtWidgets import (
     QDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QPushButton, QVBoxLayout, QWidget,
 )
+from components.confirm import ConfirmDialog
 from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-
-class ConfirmDialog(QDialog):
-    def __init__(self, parent, message):
-        super().__init__(parent)
-        self.setWindowTitle("Confirm")
-        self.setModal(True)
-        self.setMinimumWidth(300)
-
-        layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-        layout.addWidget(QLabel(message))
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        cancel = QPushButton("Cancel")
-        cancel.setObjectName("ghostButton")
-        cancel.setCursor(Qt.PointingHandCursor)
-        cancel.clicked.connect(self.reject)
-        buttons.addWidget(cancel)
-        confirm = QPushButton("Delete")
-        confirm.setObjectName("dangerButton")
-        confirm.setCursor(Qt.PointingHandCursor)
-        confirm.clicked.connect(self.accept)
-        buttons.addWidget(confirm)
-        layout.addLayout(buttons)
 
 
 class SessionRow(QFrame):

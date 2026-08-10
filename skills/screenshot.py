@@ -1,23 +1,34 @@
 import ctypes
 import sys
 from ctypes import wintypes
+from datetime import datetime
+from pathlib import Path
 
-DEFAULT_SCREEN_FILE = "screenshot.png"
-DEFAULT_WINDOW_FILE = "window.png"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CAPTURES_DIR = PROJECT_ROOT / "data" / "captures"
+
+
+def default_filename(prefix):
+    CAPTURES_DIR.mkdir(parents=True, exist_ok=True)
+    return str(CAPTURES_DIR / f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
 
 
 class ScreenshotCapture:
-    def capture_screen(self, path=DEFAULT_SCREEN_FILE):
+    def capture_screen(self, path=None):
         import pyautogui
 
+        if path is None:
+            path = default_filename("screen")
         image = pyautogui.screenshot()
         image.save(path)
         print(f"Saved: {path} ({image.width}x{image.height})")
         return str(path)
 
-    def capture_window(self, title, path=DEFAULT_WINDOW_FILE):
+    def capture_window(self, title, path=None):
         import pyautogui
 
+        if path is None:
+            path = default_filename("window")
         hwnd = self.find_window(title)
         if hwnd is None:
             print(f"Window not found: {title}")
@@ -79,14 +90,14 @@ def main():
             continue
         if line.startswith("screen"):
             parts = line.split()
-            capture.capture_screen(parts[1] if len(parts) > 1 else DEFAULT_SCREEN_FILE)
+            capture.capture_screen(parts[1] if len(parts) > 1 else None)
             continue
         if line.startswith("window"):
             parts = line.split(maxsplit=2)
             if len(parts) < 2:
                 print("Usage: window <title> [file]")
                 continue
-            capture.capture_window(parts[1], parts[2] if len(parts) > 2 else DEFAULT_WINDOW_FILE)
+            capture.capture_window(parts[1], parts[2] if len(parts) > 2 else None)
             continue
         print(f"Unknown command: {line}")
 

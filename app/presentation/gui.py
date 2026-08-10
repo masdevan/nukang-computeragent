@@ -6,6 +6,7 @@ from app.services.llm import ToolAgent, ReplyWorker
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
+from pages.gallery_page import GalleryPage
 from pages.session_page import SessionPage
 from pages.settings_page import SettingsPage
 from pages.skills_page import SkillsPage
@@ -54,6 +55,17 @@ QPushButton#dangerButton {
 QPushButton#dangerButton:hover { background-color: #a12d2d; }
 QListWidget#sessionList { background: transparent; border: none; outline: none; }
 QListWidget#sessionList::item { background: transparent; border: none; }
+QListWidget#galleryList { background: transparent; border: none; outline: none; }
+QListWidget#galleryList::item { border-radius: 4px; color: #9d9d9d; }
+QListWidget#galleryList::item:hover { background: #2d2d30; }
+QListWidget#galleryList::item:selected { background: #37373d; }
+QMenu {
+    background-color: #252526;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+}
+QMenu::item { padding: 4px 24px; }
+QMenu::item:selected { background-color: #0e639c; }
 QFrame#sessionRow { background: #1e1e1e; border-radius: 6px; }
 QLabel#sessionTime { color: #8a8a8a; font-size: 7pt; }
 QPushButton#deleteButton {
@@ -142,15 +154,18 @@ class App(QWidget):
         self.pages = QStackedWidget()
         self.chat_page = ChatPage(self.handle_message)
         self.session_page = SessionPage(self.store, self.open_session)
+        self.gallery_page = GalleryPage()
         self.pages.addWidget(self.chat_page)
         self.pages.addWidget(self.session_page)
         self.pages.addWidget(SkillsPage())
+        self.pages.addWidget(self.gallery_page)
         self.pages.addWidget(SettingsPage())
 
         self.sidebar = Sidebar([
             "components/icons/chat.svg",
             "components/icons/session.svg",
             "components/icons/skills.svg",
+            "components/icons/image.svg",
             "components/icons/settings.svg",
         ])
         self.sidebar.group.idClicked.connect(self.pages.setCurrentIndex)
