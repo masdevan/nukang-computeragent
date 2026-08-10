@@ -1,5 +1,7 @@
+import ctypes
 import json
 import re
+import time
 
 from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, mouse_control, ocr, screenshot
@@ -7,6 +9,28 @@ from skills.virtual_cursor import VirtualCursor
 
 MAX_STEPS = 25
 VIRTUAL_CURSOR = None
+MAIN_WINDOW_HWND = None
+WDA_EXCLUDEFROMCAPTURE = 0x11
+
+
+def set_main_window(hwnd):
+    global MAIN_WINDOW_HWND
+    MAIN_WINDOW_HWND = hwnd
+
+
+def exclude_window_from_capture(exclude):
+    if MAIN_WINDOW_HWND is None:
+        return
+    ctypes.windll.user32.SetWindowDisplayAffinity(MAIN_WINDOW_HWND, WDA_EXCLUDEFROMCAPTURE if exclude else 0)
+
+
+def capture_without_app(capture_action):
+    exclude_window_from_capture(True)
+    time.sleep(0.05)
+    try:
+        return capture_action()
+    finally:
+        exclude_window_from_capture(False)
 
 TOOLS = [
     {"name": "press_combo", "args": "combo string", "desc": "Press keyboard combination, e.g. win, alt+tab, ctrl+s, right*3"},
@@ -23,8 +47,7 @@ TOOLS = [
     {"name": "position", "args": "none", "desc": "Report the virtual cursor position as x,y"},
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
-    {"name": "capture_screen", "args": "none", "desc": "Screenshot the full screen, saved automatically to the captures folder"},
-    {"name": "capture_window", "args": "title string", "desc": "Screenshot a window whose title contains the given text, saved automatically to the captures folder"},
+    {"name": "capture_screen", "args": "none", "desc": "Screenshot the FULL screen, saved automatically to the captures folder; you always use this one"},
     {"name": "list_windows", "args": "none", "desc": "List titles of visible windows"},
     {"name": "get_device_info", "args": "none", "desc": "Report OS, screen resolution with DPI scale, CPU, and RAM — use the resolution to plan mouse coordinates"},
     {"name": "show_virtual_cursor", "args": "x int, y int", "desc": "Show an orange pointer at screen coordinates to direct the user's attention"},
@@ -49,10 +72,11 @@ After taking a screenshot, you receive its text content with screen coordinates,
 Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 
 INTERACTION PRIORITY — use the mouse first, always:
-1. Mouse: take a screenshot, read the OCR coordinates, move the orange virtual cursor with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
+1. Mouse: take a FULL SCREEN screenshot with capture_screen, read the OCR coordinates (always absolute to the screen), move the orange virtual cursor with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
 2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win.
 3. Commands: launch_app and run_command ONLY as a fallback when mouse or keyboard cannot do the job, or for opening apps.
 When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the virtual cursor.
+You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
@@ -193,17 +217,12 @@ def forward(args):
 
 
 def capture_screen(args):
-    capture = screenshot.ScreenshotCapture()
-    path = capture.capture_screen()
-    return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
+    def action():
+        capture = screenshot.ScreenshotCapture()
+        path = capture.capture_screen()
+        return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
 
-
-def capture_window(args):
-    capture = screenshot.ScreenshotCapture()
-    path = capture.capture_window(args["title"])
-    if path is None:
-        return "Window not found"
-    return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
+    return capture_without_app(action)
 
 
 def list_windows(args):
@@ -248,7 +267,6 @@ EXECUTORS = {
     "back": back,
     "forward": forward,
     "capture_screen": capture_screen,
-    "capture_window": capture_window,
     "list_windows": list_windows,
     "get_device_info": get_device_info,
     "show_virtual_cursor": show_virtual_cursor,

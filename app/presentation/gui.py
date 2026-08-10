@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
 from app.services.agent import ReplyWorker, init_gui_bridge
 from app.services.llm import ChatAgent
-from app.services.tools import get_virtual_cursor
+from app.services.tools import get_virtual_cursor, set_main_window
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
@@ -214,6 +214,7 @@ class App(QWidget):
         layout.addWidget(self.divider_strip())
         layout.addWidget(self.pages, stretch=1)
 
+        set_main_window(int(self.winId()))
         screen = self.screen().geometry()
         center = screen.center()
         get_virtual_cursor().show_cursor(center.x(), center.y())

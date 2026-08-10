@@ -1,10 +1,13 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QToolButton, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config, save_config
+from app.services.sessions import DATA_DIR as SESSIONS_DIR
+from components.confirm import ConfirmDialog
+from skills.screenshot import CAPTURES_DIR
 import json
 from pathlib import Path
 
@@ -17,6 +20,16 @@ def load_languages():
     if not LANGUAGES_PATH.exists():
         return [DEFAULT_LANGUAGE, "English"]
     return json.loads(LANGUAGES_PATH.read_text(encoding="utf-8"))
+
+
+def wipe_all_data():
+    removed = 0
+    for directory in (SESSIONS_DIR, CAPTURES_DIR):
+        for pattern in ("*.json", "*.png", "*.ocr.txt"):
+            for path in directory.glob(pattern):
+                path.unlink(missing_ok=True)
+                removed += 1
+    return removed
 
 
 class SettingsPage(QWidget):
@@ -88,6 +101,12 @@ class SettingsPage(QWidget):
         self.status_label.setObjectName("statusLabel")
         layout.addWidget(self.status_label)
 
+        self.delete_button = QPushButton("Delete All Data")
+        self.delete_button.setObjectName("dangerButton")
+        self.delete_button.setCursor(Qt.PointingHandCursor)
+        self.delete_button.clicked.connect(self.delete_all_data)
+        layout.addWidget(self.delete_button, alignment=Qt.AlignLeft)
+
         layout.addStretch()
 
     def toggle_key_visibility(self):
@@ -103,3 +122,10 @@ class SettingsPage(QWidget):
             "language": self.language_select.currentText(),
         })
         self.status_label.setText("Saved.")
+
+    def delete_all_data(self):
+        dialog = ConfirmDialog(self, "Delete ALL sessions and screenshots? This cannot be undone.")
+        if dialog.exec() != QDialog.Accepted:
+            return
+        removed = wipe_all_data()
+        self.status_label.setText(f"Deleted {removed} files.")

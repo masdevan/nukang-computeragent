@@ -70,6 +70,10 @@ class SessionPage(QWidget):
 
         self.reload()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.reload()
+
     def create_session(self):
         data = self.store.create()
         self.reload()
