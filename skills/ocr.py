@@ -135,7 +135,7 @@ def write_ocr_sidecar(png_path):
     lines = ocr_file(png_path)
     if isinstance(lines, str) or lines is None:
         return lines
-    text = format_lines(lines)
+    text = f"{len(lines)} lines\n{format_lines(lines)}"
     OCR_DIR.mkdir(parents=True, exist_ok=True)
     sidecar = OCR_DIR / f"{Path(png_path).stem}.txt"
     sidecar.write_text(text, encoding="utf-8")

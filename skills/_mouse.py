@@ -78,6 +78,28 @@ def hold(button, x=None, y=None, seconds=1):
         pyautogui.mouseUp(x, y, button=button)
 
 
+def mouse_down(button):
+    if sys.platform == "win32":
+        user32 = ctypes.windll.user32
+        down, _ = BUTTON_FLAGS[button]
+        user32.mouse_event(down, 0, 0, 0, 0)
+    else:
+        import pyautogui
+
+        pyautogui.mouseDown(button=button)
+
+
+def mouse_up(button):
+    if sys.platform == "win32":
+        user32 = ctypes.windll.user32
+        _, up = BUTTON_FLAGS[button]
+        user32.mouse_event(up, 0, 0, 0, 0)
+    else:
+        import pyautogui
+
+        pyautogui.mouseUp(button=button)
+
+
 def scroll(amount, x=None, y=None):
     original = None
     if x is not None and y is not None:

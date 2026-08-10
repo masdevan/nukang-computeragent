@@ -222,12 +222,15 @@ class App(QWidget):
         layout.addWidget(self.divider_strip())
         layout.addWidget(self.pages, stretch=1)
 
+    def showEvent(self, event):
+        super().showEvent(event)
         set_main_window(int(self.winId()))
         self.register_hotkey()
 
     def register_hotkey(self):
         if sys.platform != "win32":
             return
+        self.unregister_hotkey()
         ctypes.windll.user32.RegisterHotKey(int(self.winId()), HOTKEY_ID, MOD_CONTROL | MOD_ALT, ord("N"))
 
     def unregister_hotkey(self):

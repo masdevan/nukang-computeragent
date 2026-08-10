@@ -1,4 +1,3 @@
-import ctypes
 import json
 import re
 import sys
@@ -7,11 +6,13 @@ import time
 from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
 from skills import close_app as close_app_skill
+from skills import drag as drag_skill
+from skills import find_and_click as find_and_click_skill
+from skills import try_click as try_click_skill
 from skills._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
 
 MAX_STEPS = 25
 MAIN_WINDOW_HWND = None
-WDA_EXCLUDEFROMCAPTURE = 0x11
 
 
 def set_main_window(hwnd):
@@ -19,19 +20,15 @@ def set_main_window(hwnd):
     MAIN_WINDOW_HWND = hwnd
 
 
-def exclude_window_from_capture(exclude):
-    if MAIN_WINDOW_HWND is None:
-        return
-    ctypes.windll.user32.SetWindowDisplayAffinity(MAIN_WINDOW_HWND, WDA_EXCLUDEFROMCAPTURE if exclude else 0)
+def main_window_rect():
+    if MAIN_WINDOW_HWND is None or sys.platform != "win32":
+        return None
+    import ctypes
+    from ctypes import wintypes
 
-
-def capture_without_app(capture_action):
-    exclude_window_from_capture(True)
-    time.sleep(0.05)
-    try:
-        return capture_action()
-    finally:
-        exclude_window_from_capture(False)
+    rect = wintypes.RECT()
+    ctypes.windll.user32.GetWindowRect(MAIN_WINDOW_HWND, ctypes.byref(rect))
+    return (rect.left, rect.top, rect.right, rect.bottom)
 
 TOOLS = [
     {"name": "press_combo", "args": "combo string", "desc": "Press keyboard combination, e.g. win, alt+tab, ctrl+s, right*3"},
@@ -46,7 +43,10 @@ TOOLS = [
     {"name": "move_by", "args": "dx int, dy int", "desc": "Move the mouse cursor by an offset from its current position"},
     {"name": "click", "args": "button string", "desc": "Click mouse button at the current cursor position: left, right, or middle"},
     {"name": "double_click", "args": "none", "desc": "Double click the left mouse button at the current cursor position"},
-    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel at the current cursor position, positive up, negative down"},
+    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel at the current cursor position, positive up, negative down. To read long content: move_to the list, scroll, capture_screen again, repeat until the text stops changing"},
+    {"name": "drag", "args": "from_x int, from_y int, to_x int, to_y int", "desc": "Drag with the left mouse button from one point to another, like moving a window — use it to move blocking windows out of the way"},
+    {"name": "find_and_click", "args": "target_text string, expect_text string optional, context_text string optional, app_name string optional", "desc": "Scroll until the text is visible, then try a list of click points around it until the expected result appears. context_text = text proving the dialog is still open (e.g. \"Who's using Chrome?\"); app_name = the app to reopen if the context gets lost — e.g. find_and_click(\"Devan Yudistira\", \"Devan Yudistira - Google Chrome\", \"Who's using Chrome?\", \"chrome\")"},
+    {"name": "try_click", "args": "x int, y int, expect_text string optional", "desc": "Try a list of click points around (x,y) until the expected result appears or the list is exhausted — for precise clicks on any element"},
     {"name": "position", "args": "none", "desc": "Report the current mouse cursor position as x,y"},
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
@@ -72,15 +72,29 @@ Work efficiently: take ONE screenshot when you need to see the screen, do not re
 After taking a screenshot, you receive its text content with screen coordinates, e.g. "Devan Yudistira" at (960, 40).
 Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 
-INTERACTION PRIORITY — use the mouse first, always:
+When the content on screen is long (OCR shows many lines or "truncated"): do NOT decide yet.
+Scroll through ALL of it first: move_to the middle of the content, scroll with a negative amount,
+capture_screen again, and repeat until the OCR text repeats or stops changing (bottom reached).
+Only then make your decision. Never decide from the first screenful alone. This is mandatory — the user will verify you read everything.
+
+INTERACTION PRIORITY — every action that can use the mouse uses the mouse first:
 1. Mouse: take a FULL SCREEN screenshot with capture_screen, read the OCR coordinates (always absolute to the screen), move the mouse with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
-2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win.
+2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win — but ALWAYS click into the target field/area with the mouse first to give it focus.
 3. Commands: launch_app and run_command ONLY as a fallback when mouse or keyboard cannot do the job, or for opening apps.
 When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the mouse.
+To click an element whose text you know, use find_and_click(text, expected_result, context_text, app_name) — it scrolls, tries a list of click points, and if the context gets lost it presses Esc, then reopens the app and continues.
+The Nukang app window is moved to the bottom-right corner during scanning so it never covers what you inspect — understand this and rely on it.
+The app is also moved aside automatically before every screenshot and scroll — you never need to think about it or mention it.
+When find_and_click returns success, the task is done — do not run extra verification steps.
+For precise clicks on coordinates, use try_click(x, y, expected_result) — it tries the surrounding points until something changes.
+If a window closes after a click, recover: press Esc, then re-open the app if needed, and continue. Never ask the user for environment details.
+Plan your attempt list silently. Execute attempts back-to-back; do not narrate every step. Report only the final result and what was tried.
+If any window (including the Nukang app) blocks the target, drag it out of the way with drag() — or the app moves itself automatically.
 After launching an app, ALWAYS bring it to focus with focus_window before clicking or typing into it.
 To close an app, use close_app(title) — never alt+f4.
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
+read_file reads files for you — NEVER use run_command or launch_app to read or open files; run_command is only for launching apps with arguments.
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
 Never say you cannot physically do something on this computer.
@@ -182,6 +196,7 @@ def read_file(args):
 
 def move_to(args):
     x, y = int(args["x"]), int(args["y"])
+    reposition_app_away(x, y)
     mouse_move_to(x, y)
     return f"Mouse moved to ({x},{y})"
 
@@ -190,13 +205,14 @@ def move_by(args):
     x, y = current_position()
     target_x = x + int(args["dx"])
     target_y = y + int(args["dy"])
+    reposition_app_away(target_x, target_y)
     mouse_move_to(target_x, target_y)
     return f"Mouse moved by {args['dx']},{args['dy']}"
 
 
 def click(args):
     x, y = current_position()
-    ensure_point_free(x, y)
+    reposition_app_away(x, y)
     button = args.get("button", "left")
     mouse_click(button, x, y)
     return f"Clicked {button} at ({x},{y})"
@@ -204,16 +220,38 @@ def click(args):
 
 def double_click(args):
     x, y = current_position()
-    ensure_point_free(x, y)
+    reposition_app_away(x, y)
     mouse_click("left", x, y, clicks=2, interval=0.05)
     return f"Double clicked at ({x},{y})"
 
 
 def scroll(args):
     x, y = current_position()
-    ensure_point_free(x, y)
+    reposition_app_to_corner()
     mouse_scroll(int(args["amount"]), x, y)
     return f"Scrolled at ({x},{y})"
+
+
+def drag(args):
+    return drag_skill.drag(
+        int(args["from_x"]), int(args["from_y"]),
+        int(args["to_x"]), int(args["to_y"]),
+    )
+
+
+def find_and_click(args):
+    return find_and_click_skill.find_and_click(
+        args["target_text"],
+        args.get("expect_text"),
+        args.get("context_text"),
+        args.get("app_name"),
+    )
+
+
+def try_click(args):
+    return try_click_skill.try_click(
+        int(args["x"]), int(args["y"]), args.get("expect_text"),
+    )
 
 
 def position(args):
@@ -229,34 +267,121 @@ def forward(args):
     xbutton("forward")
 
 
-def ensure_point_free(x, y):
-    if MAIN_WINDOW_HWND is None or sys.platform != "win32":
+def choose_app_position(app_rect, point, screen_size):
+    app_width = app_rect[2] - app_rect[0]
+    app_height = app_rect[3] - app_rect[1]
+    margin = 8
+    point_x, point_y = point
+    screen_width, screen_height = screen_size
+    options = {
+        "top-left": (margin, margin),
+        "top-right": (screen_width - app_width - margin, margin),
+        "bottom-left": (margin, screen_height - app_height - margin),
+        "bottom-right": (screen_width - app_width - margin, screen_height - app_height - margin),
+    }
+    opposite_quadrant = {
+        "top-left": "bottom-right",
+        "top-right": "bottom-left",
+        "bottom-left": "top-right",
+        "bottom-right": "top-left",
+    }
+    if point_x < screen_width / 2 and point_y < screen_height / 2:
+        point_quadrant = "top-left"
+    elif point_x >= screen_width / 2 and point_y < screen_height / 2:
+        point_quadrant = "top-right"
+    elif point_x < screen_width / 2:
+        point_quadrant = "bottom-left"
+    else:
+        point_quadrant = "bottom-right"
+    preferred = opposite_quadrant[point_quadrant]
+    free_options = {
+        name: position
+        for name, position in options.items()
+        if not (
+            position[0] <= point_x <= position[0] + app_width
+            and position[1] <= point_y <= position[1] + app_height
+        )
+    }
+    if preferred in free_options:
+        return options[preferred]
+    if free_options:
+        farthest = max(
+            free_options.items(),
+            key=lambda item: (item[1][0] - point_x) ** 2 + (item[1][1] - point_y) ** 2,
+        )[1]
+        return farthest
+    return options[preferred]
+
+
+def reposition_app_away(x, y):
+    if not window_handle_valid():
         return
+    import ctypes
     from ctypes import wintypes
 
     user32 = ctypes.windll.user32
     rect = wintypes.RECT()
     user32.GetWindowRect(MAIN_WINDOW_HWND, ctypes.byref(rect))
-    if rect.left <= x <= rect.right and rect.top <= y <= rect.bottom:
-        screen_width = user32.GetSystemMetrics(0)
-        screen_height = user32.GetSystemMetrics(1)
-        width = rect.right - rect.left
-        height = rect.bottom - rect.top
-        user32.SetWindowPos(
-            MAIN_WINDOW_HWND, 0,
-            screen_width - width - 8, screen_height - height - 8,
-            0, 0, 0x0001 | 0x0004,
-        )
-        time.sleep(0.1)
+    app_rect = (rect.left, rect.top, rect.right, rect.bottom)
+    if not (app_rect[0] <= x <= app_rect[2] and app_rect[1] <= y <= app_rect[3]):
+        return
+    screen_size = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+    new_x, new_y = choose_app_position(app_rect, (x, y), screen_size)
+    move_window(new_x, new_y)
+    time.sleep(0.1)
+
+
+def reposition_app_to_corner():
+    if not window_handle_valid():
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    rect = wintypes.RECT()
+    user32.GetWindowRect(MAIN_WINDOW_HWND, ctypes.byref(rect))
+    width = rect.right - rect.left
+    height = rect.bottom - rect.top
+    screen_width = user32.GetSystemMetrics(0)
+    screen_height = user32.GetSystemMetrics(1)
+    move_window(screen_width - width - 8, screen_height - height - 8)
+    time.sleep(0.1)
+
+
+def window_handle_valid():
+    if MAIN_WINDOW_HWND is None or sys.platform != "win32":
+        return False
+    import ctypes
+
+    return bool(ctypes.windll.user32.IsWindow(MAIN_WINDOW_HWND))
+
+
+def move_window(x, y):
+    import ctypes
+
+    user32 = ctypes.windll.user32
+    result = user32.SetWindowPos(
+        MAIN_WINDOW_HWND, -1,
+        x, y, 0, 0,
+        0x0001 | 0x0010 | 0x0040,
+    )
+    if result == 0:
+        user32.MoveWindow(MAIN_WINDOW_HWND, x, y, 0, 0, True)
 
 
 def capture_screen(args):
-    def action():
-        capture = screenshot.ScreenshotCapture()
-        path = capture.capture_screen()
-        return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
-
-    return capture_without_app(action)
+    reposition_app_to_corner()
+    capture = screenshot.ScreenshotCapture()
+    path = capture.capture_screen()
+    text = ocr.write_ocr_sidecar(path)
+    result = f"Saved: {path}\n{text}"
+    if "truncated" in text:
+        result += (
+            "\nIMPORTANT: the OCR above was truncated — the content continues below the visible screen. "
+            "You MUST scroll down (move_to the middle of the content, then scroll with a negative amount), "
+            "capture_screen again, and repeat until the text stops changing, before making any decision."
+        )
+    return result
 
 
 def list_windows(args):
@@ -281,6 +406,9 @@ EXECUTORS = {
     "click": click,
     "double_click": double_click,
     "scroll": scroll,
+    "drag": drag,
+    "find_and_click": find_and_click,
+    "try_click": try_click,
     "position": position,
     "back": back,
     "forward": forward,

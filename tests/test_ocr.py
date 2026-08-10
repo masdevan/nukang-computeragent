@@ -32,6 +32,7 @@ def test_write_ocr_sidecar_full_and_capped(tmp_path, monkeypatch):
     sidecar = tmp_path / "screen.txt"
     full = sidecar.read_text(encoding="utf-8")
     assert full == feed
+    assert full.startswith("1 lines\n")
     assert "Devan" in full
 
 
@@ -40,5 +41,6 @@ def test_write_ocr_sidecar_truncates(monkeypatch):
     monkeypatch.setattr(ocr, "ocr_file", lambda path: [long_line] * 300)
     monkeypatch.setattr(ocr, "OCR_DIR", Path("unused"))
     feed = ocr.write_ocr_sidecar(Path("unused.png"))
+    assert feed.startswith("300 lines\n")
     assert "truncated" in feed
     assert len(feed) <= ocr.MAX_MODEL_CHARS + 200

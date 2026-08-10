@@ -40,11 +40,15 @@
 │   ├── settings_page.py
 │   └── skills_page.py
 ├── skills/
+│   ├── _click_try.py
 │   ├── _mouse.py
 │   ├── app_launcher.py
 │   ├── back.py
+│   ├── close_app.py
 │   ├── double_click.py
+│   ├── drag.py
 │   ├── file_ops.py
+│   ├── find_and_click.py
 │   ├── forward.py
 │   ├── hold_left_click.py
 │   ├── keyboard_controls.py
@@ -54,6 +58,7 @@
 │   ├── screenshot.py
 │   ├── scroll_down.py
 │   ├── scroll_up.py
+│   ├── try_click.py
 │   └── window_focus.py
 └── tests/
     ├── test_device.py

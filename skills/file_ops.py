@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -5,7 +6,8 @@ MAX_CHARS = 10000
 
 
 def read_file(path):
-    file = Path(path)
+    expanded = os.path.expandvars(os.path.expanduser(path))
+    file = Path(expanded)
     if not file.exists():
         return f"File not found: {path}"
     if not file.is_file():
