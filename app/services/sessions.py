@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "sessions"
+_id_counter = 0
 
 
 class SessionStore:
@@ -11,7 +12,9 @@ class SessionStore:
         self.directory.mkdir(parents=True, exist_ok=True)
 
     def create(self):
-        session_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        global _id_counter
+        _id_counter += 1
+        session_id = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}{_id_counter:03d}"
         data = {
             "id": session_id,
             "created_at": datetime.now().isoformat(timespec="seconds"),
