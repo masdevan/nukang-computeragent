@@ -1,7 +1,8 @@
 from PySide6.QtCore import QThread, Signal
 
 from app.services.tools import (
-    MAX_STEPS, build_system_prompt, execute_tool, format_call, parse_tool_call,
+    MAX_STEPS, build_system_prompt, execute_tool, format_call,
+    looks_like_tool_attempt, parse_tool_call,
 )
 
 
@@ -55,6 +56,18 @@ class ReplyWorker(QThread):
                 text = "".join(parts)
                 tool_call = parse_tool_call(text)
                 if tool_call is None:
+                    if looks_like_tool_attempt(text):
+                        conversation.append({"role": "assistant", "content": text})
+                        conversation.append({
+                            "role": "user",
+                            "content": (
+                                "Your tool call JSON was malformed and could not be parsed. "
+                                'Reply with ONLY a valid JSON object in this exact form: '
+                                '{"tool": {"name": "<tool_name>", "args": {...}}} - '
+                                "no other text, properly escaped quotes."
+                            ),
+                        })
+                        continue
                     self.finished.emit(text, "", "done")
                     return
                 self.tool_ready.emit(format_call(tool_call))

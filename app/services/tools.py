@@ -1,10 +1,11 @@
 import json
 import re
 
+from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, mouse_control, ocr, screenshot
 from skills.virtual_cursor import VirtualCursor
 
-MAX_STEPS = 6
+MAX_STEPS = 15
 VIRTUAL_CURSOR = None
 
 TOOLS = [
@@ -25,6 +26,7 @@ TOOLS = [
     {"name": "capture_screen", "args": "none", "desc": "Screenshot the full screen, saved automatically to the captures folder"},
     {"name": "capture_window", "args": "title string", "desc": "Screenshot a window whose title contains the given text, saved automatically to the captures folder"},
     {"name": "list_windows", "args": "none", "desc": "List titles of visible windows"},
+    {"name": "get_device_info", "args": "none", "desc": "Report OS, screen resolution with DPI scale, CPU, and RAM — use the resolution to plan mouse coordinates"},
     {"name": "show_virtual_cursor", "args": "x int, y int", "desc": "Show an orange pointer at screen coordinates to direct the user's attention"},
     {"name": "hide_virtual_cursor", "args": "none", "desc": "Hide the orange virtual cursor overlay"},
 ]
@@ -36,11 +38,13 @@ Always reply in {language}, regardless of the language the user types in.
 
 To perform an action, reply with ONLY a JSON object, no other text:
 {{"tool": {{"name": "<tool_name>", "args": {{...}}}}}}
+Your tool call must be a single valid JSON object with properly escaped quotes, no prose around it.
 
 Available tools:
 {tools}
 
 After each tool result, continue until the task is done.
+Work efficiently: take ONE screenshot when you need to see the screen, do not repeat the same screenshot, and verify results with at most one capture.
 After taking a screenshot, you receive its text content with screen coordinates, e.g. "Devan Yudistira" at (960, 40).
 Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 
@@ -65,19 +69,38 @@ def build_system_prompt(language):
 
 
 def parse_tool_call(text):
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        return None
-    try:
-        payload = json.loads(match.group())
-    except json.JSONDecodeError:
-        return None
-    if not isinstance(payload, dict):
-        return None
-    tool = payload.get("tool")
-    if isinstance(tool, dict) and isinstance(tool.get("name"), str):
-        return tool
+    candidates = extract_json_blocks(text)
+    for candidate in candidates:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        tool = payload.get("tool")
+        if isinstance(tool, dict) and isinstance(tool.get("name"), str):
+            return tool
     return None
+
+
+def extract_json_blocks(text):
+    stripped = re.sub(r"```(?:json)?\s*|\s*```", "", text)
+    candidates = []
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", stripped):
+        try:
+            payload, _ = decoder.raw_decode(stripped, match.start())
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            candidates.append(json.dumps(payload))
+    if stripped not in candidates:
+        candidates.append(stripped)
+    return candidates
+
+
+def looks_like_tool_attempt(text):
+    return '"tool"' in text and ('"name"' in text or '"args"' in text)
 
 
 def format_call(tool_call):
@@ -173,6 +196,10 @@ def list_windows(args):
     return "\n".join(screenshot.ScreenshotCapture().list_windows())
 
 
+def get_device_info(args):
+    return format_device_info(collect_device_info())
+
+
 def show_virtual_cursor(args):
     cursor = get_virtual_cursor()
     cursor.show_cursor(int(args["x"]), int(args["y"]))
@@ -209,6 +236,7 @@ EXECUTORS = {
     "capture_screen": capture_screen,
     "capture_window": capture_window,
     "list_windows": list_windows,
+    "get_device_info": get_device_info,
     "show_virtual_cursor": show_virtual_cursor,
     "hide_virtual_cursor": hide_virtual_cursor,
 }

@@ -133,6 +133,12 @@ QTextEdit#ocrViewer {
     font-size: 8pt;
 }
 QLabel#infoMuted { color: #8a8a8a; }
+QLabel#infoSection {
+    color: #e0e0e0;
+    font-size: 10pt;
+    font-weight: bold;
+    margin-top: 12px;
+}
 QLabel#infoCreator {
     color: #e0e0e0;
     font-size: 14pt;
