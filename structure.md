@@ -12,9 +12,13 @@
 │       ├── agent.py
 │       ├── config.py
 │       ├── device.py
+│       ├── executors.py
 │       ├── llm.py
+│       ├── parser.py
+│       ├── prompt.py
 │       ├── sessions.py
-│       └── tools.py
+│       ├── tools.py
+│       └── window_manager.py
 ├── components/
 │   ├── confirm.py
 │   ├── sidebar.py
