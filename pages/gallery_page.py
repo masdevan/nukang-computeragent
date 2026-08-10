@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 from components.confirm import ConfirmDialog
+from skills.ocr import OCR_DIR
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -112,7 +113,7 @@ class GalleryPage(QWidget):
         ocr_text = QTextEdit()
         ocr_text.setObjectName("ocrViewer")
         ocr_text.setReadOnly(True)
-        sidecar = path.with_suffix(".ocr.txt")
+        sidecar = OCR_DIR / f"{path.stem}.txt"
         if sidecar.exists():
             ocr_text.setPlainText(sidecar.read_text(encoding="utf-8"))
         else:
@@ -126,5 +127,5 @@ class GalleryPage(QWidget):
         if dialog.exec() == QDialog.Accepted:
             path = Path(item.data(Qt.UserRole))
             path.unlink(missing_ok=True)
-            path.with_suffix(".ocr.txt").unlink(missing_ok=True)
+            (OCR_DIR / f"{path.stem}.txt").unlink(missing_ok=True)
             self.reload()

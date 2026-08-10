@@ -2,6 +2,8 @@ import asyncio
 import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+OCR_DIR = PROJECT_ROOT / "data" / "ocr"
 MAX_MODEL_CHARS = 12000
 
 
@@ -77,7 +79,8 @@ def write_ocr_sidecar(png_path):
     if isinstance(lines, str) or lines is None:
         return lines
     text = format_lines(lines)
-    sidecar = Path(png_path).with_suffix(".ocr.txt")
+    OCR_DIR.mkdir(parents=True, exist_ok=True)
+    sidecar = OCR_DIR / f"{Path(png_path).stem}.txt"
     sidecar.write_text(text, encoding="utf-8")
     if len(text) > MAX_MODEL_CHARS:
         text = text[:MAX_MODEL_CHARS] + f"\n...[truncated {len(text) - MAX_MODEL_CHARS} chars]"

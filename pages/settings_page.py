@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config, save_config
 from app.services.sessions import DATA_DIR as SESSIONS_DIR
 from components.confirm import ConfirmDialog
+from skills.ocr import OCR_DIR
 from skills.screenshot import CAPTURES_DIR
 import json
 from pathlib import Path
@@ -24,8 +25,13 @@ def load_languages():
 
 def wipe_all_data():
     removed = 0
-    for directory in (SESSIONS_DIR, CAPTURES_DIR):
-        for pattern in ("*.json", "*.png", "*.ocr.txt"):
+    targets = (
+        (SESSIONS_DIR, ("*.json",)),
+        (CAPTURES_DIR, ("*.png",)),
+        (OCR_DIR, ("*.txt",)),
+    )
+    for directory, patterns in targets:
+        for pattern in patterns:
             for path in directory.glob(pattern):
                 path.unlink(missing_ok=True)
                 removed += 1
