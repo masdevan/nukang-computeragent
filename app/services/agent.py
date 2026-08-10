@@ -1,54 +1,9 @@
-from PySide6.QtCore import QObject, QThread, Qt, Signal
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QThread, Signal
 
 from app.services.tools import (
     MAX_STEPS, build_system_prompt, execute_tool, format_call,
     looks_like_tool_attempt, parse_tool_call,
 )
-
-GUI_TOOLS = {
-    "move_to",
-    "move_by",
-    "click",
-    "double_click",
-    "scroll",
-    "position",
-    "show_virtual_cursor",
-    "hide_virtual_cursor",
-}
-
-_gui_bridge = None
-
-
-class GuiBridge(QObject):
-    call = Signal(object)
-
-    def __init__(self):
-        super().__init__()
-        self.result = None
-        self.call.connect(self._handle, Qt.BlockingQueuedConnection)
-
-    def invoke(self, tool_call):
-        self.result = None
-        self.call.emit(tool_call)
-        return self.result
-
-    def _handle(self, tool_call):
-        self.result = execute_tool(tool_call)
-
-
-def init_gui_bridge():
-    global _gui_bridge
-    if _gui_bridge is None:
-        _gui_bridge = GuiBridge()
-
-
-def execute_safe(tool_call):
-    if tool_call["name"] not in GUI_TOOLS:
-        return execute_tool(tool_call)
-    if QThread.currentThread() is QApplication.instance().thread():
-        return execute_tool(tool_call)
-    return _gui_bridge.invoke(tool_call)
 
 
 class ReplyWorker(QThread):
@@ -131,7 +86,7 @@ class ReplyWorker(QThread):
                         "Do something different, adjust the approach, or tell the user what you need."
                     )
                 else:
-                    result = execute_safe(tool_call)
+                    result = execute_tool(tool_call)
                 recent_calls.append(tool_call)
                 conversation.append({"role": "assistant", "content": text})
                 conversation.append({"role": "user", "content": f"Tool result: {result}"})

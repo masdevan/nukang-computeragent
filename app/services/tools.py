@@ -1,15 +1,15 @@
 import ctypes
 import json
 import re
+import sys
 import time
 
 from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
-from skills._mouse import xbutton
-from skills.virtual_cursor import VirtualCursor
+from skills import close_app as close_app_skill
+from skills._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
 
 MAX_STEPS = 25
-VIRTUAL_CURSOR = None
 MAIN_WINDOW_HWND = None
 WDA_EXCLUDEFROMCAPTURE = 0x11
 
@@ -39,21 +39,20 @@ TOOLS = [
     {"name": "type_text", "args": "text string", "desc": "Type text using the keyboard"},
     {"name": "launch_app", "args": "name string", "desc": "Launch an installed application by name, e.g. chrome, notepad, calculator"},
     {"name": "focus_window", "args": "title string", "desc": "Bring a window to the foreground and focus it, e.g. after launching an app, before clicking or typing into it"},
+    {"name": "close_app", "args": "title string", "desc": "Close a window gracefully by its title, e.g. close_app(Notepad). Never use alt+f4"},
     {"name": "run_command", "args": "command string", "desc": "Run a Windows command line with arguments, e.g. chrome --profile-directory=\"Profile 1\""},
     {"name": "read_file", "args": "path string", "desc": "Read a text file and return its content. Use to inspect config files like Chrome's Local State to find profile folder names"},
-    {"name": "move_to", "args": "x int, y int", "desc": "Move the orange virtual cursor to screen coordinates; your real cursor stays put"},
-    {"name": "move_by", "args": "dx int, dy int", "desc": "Move the virtual cursor by an offset from its current position"},
-    {"name": "click", "args": "button string", "desc": "Click mouse button at the virtual cursor position: left, right, or middle"},
-    {"name": "double_click", "args": "none", "desc": "Double click the left mouse button at the virtual cursor position"},
-    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel at the virtual cursor position, positive up, negative down"},
-    {"name": "position", "args": "none", "desc": "Report the virtual cursor position as x,y"},
+    {"name": "move_to", "args": "x int, y int", "desc": "Move the mouse cursor to screen coordinates"},
+    {"name": "move_by", "args": "dx int, dy int", "desc": "Move the mouse cursor by an offset from its current position"},
+    {"name": "click", "args": "button string", "desc": "Click mouse button at the current cursor position: left, right, or middle"},
+    {"name": "double_click", "args": "none", "desc": "Double click the left mouse button at the current cursor position"},
+    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel at the current cursor position, positive up, negative down"},
+    {"name": "position", "args": "none", "desc": "Report the current mouse cursor position as x,y"},
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
     {"name": "capture_screen", "args": "none", "desc": "Screenshot the FULL screen, saved automatically to the captures folder; you always use this one"},
     {"name": "list_windows", "args": "none", "desc": "List titles of visible windows"},
     {"name": "get_device_info", "args": "none", "desc": "Report OS, screen resolution with DPI scale, CPU, and RAM — use the resolution to plan mouse coordinates"},
-    {"name": "show_virtual_cursor", "args": "x int, y int", "desc": "Show an orange pointer at screen coordinates to direct the user's attention"},
-    {"name": "hide_virtual_cursor", "args": "none", "desc": "Hide the orange virtual cursor overlay"},
 ]
 
 SYSTEM_PROMPT = """You are Nukang, an AI computer agent that controls a Windows computer.
@@ -74,11 +73,12 @@ After taking a screenshot, you receive its text content with screen coordinates,
 Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 
 INTERACTION PRIORITY — use the mouse first, always:
-1. Mouse: take a FULL SCREEN screenshot with capture_screen, read the OCR coordinates (always absolute to the screen), move the orange virtual cursor with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
+1. Mouse: take a FULL SCREEN screenshot with capture_screen, read the OCR coordinates (always absolute to the screen), move the mouse with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
 2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win.
 3. Commands: launch_app and run_command ONLY as a fallback when mouse or keyboard cannot do the job, or for opening apps.
-When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the virtual cursor.
+When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the mouse.
 After launching an app, ALWAYS bring it to focus with focus_window before clicking or typing into it.
+To close an app, use close_app(title) — never alt+f4.
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
@@ -168,6 +168,10 @@ def focus_window(args):
     return window_focus.focus_window(args["title"])
 
 
+def close_app(args):
+    return close_app_skill.close_app(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
+
+
 def run_command(args):
     return app_launcher.run_command(args["command"])
 
@@ -177,42 +181,44 @@ def read_file(args):
 
 
 def move_to(args):
-    cursor = get_virtual_cursor()
-    cursor.show_cursor(int(args["x"]), int(args["y"]))
-    return f"Virtual cursor at {args['x']},{args['y']}"
+    x, y = int(args["x"]), int(args["y"])
+    mouse_move_to(x, y)
+    return f"Mouse moved to ({x},{y})"
 
 
 def move_by(args):
-    cursor = get_virtual_cursor()
-    cursor.move_by(int(args["dx"]), int(args["dy"]))
-    return f"Virtual cursor moved by {args['dx']},{args['dy']}"
+    x, y = current_position()
+    target_x = x + int(args["dx"])
+    target_y = y + int(args["dy"])
+    mouse_move_to(target_x, target_y)
+    return f"Mouse moved by {args['dx']},{args['dy']}"
 
 
 def click(args):
-    cursor = get_virtual_cursor()
-    x, y = cursor.final_position()
+    x, y = current_position()
+    ensure_point_free(x, y)
     button = args.get("button", "left")
-    cursor.click_at(x, y, button)
+    mouse_click(button, x, y)
     return f"Clicked {button} at ({x},{y})"
 
 
 def double_click(args):
-    cursor = get_virtual_cursor()
-    x, y = cursor.final_position()
-    cursor.double_click_at(x, y)
+    x, y = current_position()
+    ensure_point_free(x, y)
+    mouse_click("left", x, y, clicks=2, interval=0.05)
     return f"Double clicked at ({x},{y})"
 
 
 def scroll(args):
-    cursor = get_virtual_cursor()
-    x, y = cursor.final_position()
-    cursor.scroll_at(x, y, int(args["amount"]))
+    x, y = current_position()
+    ensure_point_free(x, y)
+    mouse_scroll(int(args["amount"]), x, y)
     return f"Scrolled at ({x},{y})"
 
 
 def position(args):
-    x, y = get_virtual_cursor().final_position()
-    return f"Virtual cursor position: {x},{y}"
+    x, y = current_position()
+    return f"Mouse position: {x},{y}"
 
 
 def back(args):
@@ -221,6 +227,27 @@ def back(args):
 
 def forward(args):
     xbutton("forward")
+
+
+def ensure_point_free(x, y):
+    if MAIN_WINDOW_HWND is None or sys.platform != "win32":
+        return
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    rect = wintypes.RECT()
+    user32.GetWindowRect(MAIN_WINDOW_HWND, ctypes.byref(rect))
+    if rect.left <= x <= rect.right and rect.top <= y <= rect.bottom:
+        screen_width = user32.GetSystemMetrics(0)
+        screen_height = user32.GetSystemMetrics(1)
+        width = rect.right - rect.left
+        height = rect.bottom - rect.top
+        user32.SetWindowPos(
+            MAIN_WINDOW_HWND, 0,
+            screen_width - width - 8, screen_height - height - 8,
+            0, 0, 0x0001 | 0x0004,
+        )
+        time.sleep(0.1)
 
 
 def capture_screen(args):
@@ -240,30 +267,13 @@ def get_device_info(args):
     return format_device_info(collect_device_info())
 
 
-def show_virtual_cursor(args):
-    cursor = get_virtual_cursor()
-    cursor.show_cursor(int(args["x"]), int(args["y"]))
-    return f"Virtual cursor shown at {args['x']},{args['y']}"
-
-
-def hide_virtual_cursor(args):
-    get_virtual_cursor().hide_cursor()
-    return "Virtual cursor hidden"
-
-
-def get_virtual_cursor():
-    global VIRTUAL_CURSOR
-    if VIRTUAL_CURSOR is None:
-        VIRTUAL_CURSOR = VirtualCursor(keyboard_control=False)
-    return VIRTUAL_CURSOR
-
-
 EXECUTORS = {
     "press_combo": press_combo,
     "press_key": press_key,
     "type_text": type_text,
     "launch_app": launch_app,
     "focus_window": focus_window,
+    "close_app": close_app,
     "run_command": run_command,
     "read_file": read_file,
     "move_to": move_to,
@@ -277,6 +287,4 @@ EXECUTORS = {
     "capture_screen": capture_screen,
     "list_windows": list_windows,
     "get_device_info": get_device_info,
-    "show_virtual_cursor": show_virtual_cursor,
-    "hide_virtual_cursor": hide_virtual_cursor,
 }

@@ -1,10 +1,14 @@
+import ctypes
+import ctypes.wintypes
+import sys
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
-from app.services.agent import ReplyWorker, init_gui_bridge
+from app.services.agent import ReplyWorker
 from app.services.llm import ChatAgent
-from app.services.tools import get_virtual_cursor, set_main_window
+from app.services.tools import set_main_window
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
@@ -13,6 +17,11 @@ from pages.info_page import InfoPage
 from pages.session_page import SessionPage
 from pages.settings_page import SettingsPage
 from pages.skills_page import SkillsPage
+
+HOTKEY_ID = 1
+MOD_CONTROL = 0x0002
+MOD_ALT = 0x0001
+WM_HOTKEY = 0x0312
 
 DARK_STYLE = """
 QWidget {
@@ -171,7 +180,6 @@ def apply_pure_dark(qapp):
 class App(QWidget):
     def __init__(self):
         super().__init__()
-        init_gui_bridge()
         self.store = SessionStore()
         self.current_session = None
         self.reply_worker = None
@@ -215,9 +223,33 @@ class App(QWidget):
         layout.addWidget(self.pages, stretch=1)
 
         set_main_window(int(self.winId()))
-        screen = self.screen().geometry()
-        center = screen.center()
-        get_virtual_cursor().show_cursor(center.x(), center.y())
+        self.register_hotkey()
+
+    def register_hotkey(self):
+        if sys.platform != "win32":
+            return
+        ctypes.windll.user32.RegisterHotKey(int(self.winId()), HOTKEY_ID, MOD_CONTROL | MOD_ALT, ord("N"))
+
+    def unregister_hotkey(self):
+        if sys.platform != "win32":
+            return
+        ctypes.windll.user32.UnregisterHotKey(int(self.winId()), HOTKEY_ID)
+
+    def closeEvent(self, event):
+        self.unregister_hotkey()
+        super().closeEvent(event)
+
+    def nativeEvent(self, event_type, message):
+        if sys.platform == "win32":
+            msg = ctypes.wintypes.MSG.from_address(message.__int__())
+            if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                self.show()
+                self.setWindowState(self.windowState() & ~Qt.WindowMinimized)
+                self.raise_()
+                self.activateWindow()
+                self.chat_page.message_input.setFocus()
+                return True, 0
+        return super().nativeEvent(event_type, message)
 
     def handle_message(self, message):
         if self.current_session is None:

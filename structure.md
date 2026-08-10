@@ -54,7 +54,7 @@
 │   ├── screenshot.py
 │   ├── scroll_down.py
 │   ├── scroll_up.py
-│   └── virtual_cursor.py
+│   └── window_focus.py
 └── tests/
     ├── test_device.py
     ├── test_keyboard.py

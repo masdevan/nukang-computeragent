@@ -9,7 +9,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = PROJECT_ROOT / "skills"
 
 SKILL_DESCRIPTIONS = {
-    "virtual_cursor": "Second cursor, keyboard-controlled",
     "keyboard_controls": "Press key combos and type text",
     "left_click": "Left click with mouse",
     "right_click": "Right click with mouse",
@@ -22,6 +21,7 @@ SKILL_DESCRIPTIONS = {
     "screenshot": "Capture screen or a specific window",
     "app_launcher": "Launch apps and run commands",
     "window_focus": "Focus a window by title",
+    "close_app": "Close a window gracefully by title",
     "file_ops": "Read files from disk",
     "ocr": "Extract text with coordinates from screenshots",
 }
