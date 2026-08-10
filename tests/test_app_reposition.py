@@ -17,7 +17,8 @@ tools.reposition_app_to_corner = fake_corner
 
 def test_capture_screen_moves_app_first(monkeypatch):
     corner_calls.clear()
-    monkeypatch.setattr(tools.screenshot.ScreenshotCapture, "capture_screen", lambda self, path=None: "fake.png")
+    monkeypatch.setattr(tools, "capture_region", lambda: (0, 0, 1920, 1080))
+    monkeypatch.setattr(tools.screenshot.ScreenshotCapture, "capture_screen", lambda self, path=None, region=None: "fake.png")
     monkeypatch.setattr(tools.ocr, "write_ocr_sidecar", lambda path: "100 lines\nx")
 
     result = tools.capture_screen({})

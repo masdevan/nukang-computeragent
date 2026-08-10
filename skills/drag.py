@@ -7,7 +7,7 @@ DRAG_STEPS = 12
 
 
 def drag(from_x, from_y, to_x, to_y):
-    move_to(from_x, from_y)
+    move_to(from_x, from_y, smooth=False)
     time.sleep(0.05)
     mouse_down("left")
     time.sleep(0.05)
@@ -16,6 +16,7 @@ def drag(from_x, from_y, to_x, to_y):
         move_to(
             round(from_x + (to_x - from_x) * ratio),
             round(from_y + (to_y - from_y) * ratio),
+            smooth=False,
         )
         time.sleep(0.01)
     time.sleep(0.05)

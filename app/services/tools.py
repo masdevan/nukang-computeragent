@@ -53,7 +53,8 @@ TOOLS = [
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
     {"name": "capture_screen", "args": "none", "desc": "Screenshot the FULL screen, saved automatically to the captures folder; you always use this one"},
-    {"name": "list_windows", "args": "none", "desc": "List titles of visible windows"},
+    {"name": "list_windows", "args": "none", "desc": "List titles of visible windows (all virtual desktops)"},
+    {"name": "list_desktops", "args": "none", "desc": "List Windows virtual desktops with window counts; the active one is marked"},
     {"name": "get_device_info", "args": "none", "desc": "Report OS, screen resolution with DPI scale, CPU, and RAM — use the resolution to plan mouse coordinates"},
 ]
 
@@ -332,9 +333,10 @@ def reposition_app_away(x, y):
     app_rect = (rect.left, rect.top, rect.right, rect.bottom)
     if not (app_rect[0] <= x <= app_rect[2] and app_rect[1] <= y <= app_rect[3]):
         return
-    screen_size = (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
-    new_x, new_y = choose_app_position(app_rect, (x, y), screen_size)
+    screen = active_screen()
+    new_x, new_y = choose_app_position(app_rect, (x, y), screen)
     move_window(new_x, new_y)
+    follow_active_desktop()
     time.sleep(0.1)
 
 
@@ -349,10 +351,45 @@ def reposition_app_to_corner():
     user32.GetWindowRect(MAIN_WINDOW_HWND, ctypes.byref(rect))
     width = rect.right - rect.left
     height = rect.bottom - rect.top
-    screen_width = user32.GetSystemMetrics(0)
-    screen_height = user32.GetSystemMetrics(1)
+    screen = active_screen()
+    screen_width, screen_height = screen
     move_window(screen_width - width - 8, screen_height - height - 8)
+    follow_active_desktop()
     time.sleep(0.1)
+
+
+def active_screen():
+    from app.services.device import active_screen_info
+
+    monitor = active_screen_info()
+    if monitor is None:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        return (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+    return (monitor["width"], monitor["height"])
+
+
+def follow_active_desktop():
+    if MAIN_WINDOW_HWND is None or sys.platform != "win32":
+        return
+    try:
+        from app.services.device import (
+            current_desktop_guid, desktop_manager,
+            manager_move_window_to_desktop, release_manager,
+        )
+
+        manager = desktop_manager()
+        if manager is None:
+            return
+        try:
+            desktop_id = current_desktop_guid()
+            if desktop_id:
+                manager_move_window_to_desktop(manager, MAIN_WINDOW_HWND, desktop_id)
+        finally:
+            release_manager(manager)
+    except Exception:
+        pass
 
 
 def window_handle_valid():
@@ -379,7 +416,7 @@ def move_window(x, y):
 def capture_screen(args):
     reposition_app_to_corner()
     capture = screenshot.ScreenshotCapture()
-    path = capture.capture_screen()
+    path = capture.capture_screen(region=capture_region())
     text = ocr.write_ocr_sidecar(path)
     result = f"Saved: {path}\n{text}"
     if "truncated" in text:
@@ -391,8 +428,36 @@ def capture_screen(args):
     return result
 
 
+def capture_region():
+    from app.services.device import active_screen_info
+
+    monitor = active_screen_info()
+    if monitor is None:
+        return None
+    return (
+        monitor["x"], monitor["y"],
+        monitor["width"], monitor["height"],
+    )
+
+
 def list_windows(args):
     return "\n".join(screenshot.ScreenshotCapture().list_windows())
+
+
+def list_desktops(args):
+    from app.services.device import virtual_desktops
+
+    result = virtual_desktops()
+    if result is None:
+        return "Virtual desktop listing is only supported on Windows."
+    desktops, current = result
+    if not desktops:
+        return "No desktops detected."
+    lines = []
+    for index, (desktop_id, titles) in enumerate(desktops.items(), start=1):
+        marker = " (active)" if desktop_id == current else ""
+        lines.append(f"Desktop {index}{marker}: {len(titles)} windows")
+    return "\n".join(lines)
 
 
 def get_device_info(args):
@@ -422,5 +487,6 @@ EXECUTORS = {
     "forward": forward,
     "capture_screen": capture_screen,
     "list_windows": list_windows,
+    "list_desktops": list_desktops,
     "get_device_info": get_device_info,
 }

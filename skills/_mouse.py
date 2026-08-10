@@ -29,7 +29,14 @@ def current_position():
     return pos.x, pos.y
 
 
-def move_to(x, y):
+def move_to(x, y, smooth=True):
+    if smooth:
+        smooth_move_to(x, y)
+    else:
+        instant_move_to(x, y)
+
+
+def instant_move_to(x, y):
     if sys.platform == "win32":
         user32 = ctypes.windll.user32
         width = user32.GetSystemMetrics(0)
@@ -41,6 +48,35 @@ def move_to(x, y):
         import pyautogui
 
         pyautogui.moveTo(x, y)
+
+
+def smooth_move_to(x, y):
+    if sys.platform == "win32":
+        start_x, start_y = current_position()
+        points = smooth_steps(start_x, start_y, x, y)
+        user32 = ctypes.windll.user32
+        for point_x, point_y in points:
+            user32.SetCursorPos(point_x, point_y)
+            time.sleep(0.012)
+    else:
+        import pyautogui
+
+        pyautogui.moveTo(x, y, duration=0.25, tween=pyautogui.easeOutQuad)
+
+
+def smooth_steps(start_x, start_y, target_x, target_y):
+    distance = abs(target_x - start_x) + abs(target_y - start_y)
+    duration_ms = max(90, min(350, distance * 0.6))
+    step_count = max(2, int(duration_ms / 12))
+    steps = []
+    for step in range(1, step_count + 1):
+        progress = step / step_count
+        eased = 1 - (1 - progress) ** 3
+        steps.append((
+            round(start_x + (target_x - start_x) * eased),
+            round(start_y + (target_y - start_y) * eased),
+        ))
+    return steps
 
 
 def click(button, x=None, y=None, clicks=1, interval=0.05):

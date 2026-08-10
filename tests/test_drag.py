@@ -10,8 +10,8 @@ from skills import drag
 def test_drag_calls_mouse_sequence(monkeypatch):
     calls = []
 
-    def fake_move(x, y):
-        calls.append(("move", x, y))
+    def fake_move(x, y, smooth=True):
+        calls.append(("move", x, y, smooth))
 
     def fake_down(button):
         calls.append(("down", button))
@@ -27,9 +27,10 @@ def test_drag_calls_mouse_sequence(monkeypatch):
     result = drag.drag(100, 100, 200, 300)
 
     assert result == "Dragged from (100,100) to (200,300)"
-    assert calls[0] == ("move", 100, 100)
+    assert calls[0] == ("move", 100, 100, False)
     assert calls[1] == ("down", "left")
     assert calls[-1] == ("up", "left")
     moves = [c for c in calls if c[0] == "move"]
     assert len(moves) == drag.DRAG_STEPS + 1
-    assert moves[-1] == ("move", 200, 300)
+    assert moves[-1] == ("move", 200, 300, False)
+    assert all(move[3] is False for move in moves)

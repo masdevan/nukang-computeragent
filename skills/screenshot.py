@@ -14,12 +14,15 @@ def default_filename(prefix):
 
 
 class ScreenshotCapture:
-    def capture_screen(self, path=None):
+    def capture_screen(self, path=None, region=None):
         import pyautogui
 
         if path is None:
             path = default_filename("screen")
-        image = pyautogui.screenshot()
+        if region is None:
+            image = pyautogui.screenshot()
+        else:
+            image = pyautogui.screenshot(region=region)
         image.save(path)
         print(f"Saved: {path} ({image.width}x{image.height})")
         return str(path)
