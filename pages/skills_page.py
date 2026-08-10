@@ -13,6 +13,8 @@ SKILL_DESCRIPTIONS = {
     "keyboard_controls": "Press key combos and type text",
     "mouse_control": "Move, click, scroll, back/forward",
     "screenshot": "Capture screen or a specific window",
+    "app_launcher": "Launch apps and run commands",
+    "file_ops": "Read files from disk",
 }
 
 

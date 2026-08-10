@@ -1,16 +1,22 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QToolButton, QVBoxLayout, QWidget,
 )
-from app.services.config import (
-    DEFAULT_BASE_URL, DEFAULT_MODEL, load_config, save_config,
-)
+from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config, save_config
+import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INPUT_HEIGHT = 36
+LANGUAGES_PATH = PROJECT_ROOT / "lib" / "languages.json"
+
+
+def load_languages():
+    if not LANGUAGES_PATH.exists():
+        return [DEFAULT_LANGUAGE, "English"]
+    return json.loads(LANGUAGES_PATH.read_text(encoding="utf-8"))
 
 
 class SettingsPage(QWidget):
@@ -62,6 +68,14 @@ class SettingsPage(QWidget):
         self.model_input.setPlaceholderText(DEFAULT_MODEL)
         form.addRow("Model", self.model_input)
 
+        self.language_select = QComboBox()
+        self.language_select.setObjectName("settingsInput")
+        self.language_select.setFixedHeight(INPUT_HEIGHT)
+        self.language_select.addItems(load_languages())
+        current_language = current.get("language", DEFAULT_LANGUAGE)
+        self.language_select.setCurrentText(current_language)
+        form.addRow("Language", self.language_select)
+
         layout.addLayout(form)
 
         self.save_button = QPushButton("Save")
@@ -86,5 +100,6 @@ class SettingsPage(QWidget):
             "base_url": self.url_input.text().strip(),
             "api_key": self.key_input.text().strip(),
             "model": self.model_input.text().strip(),
+            "language": self.language_select.currentText(),
         })
         self.status_label.setText("Saved.")

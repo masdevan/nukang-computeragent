@@ -1,8 +1,8 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
-from app.services.config import DEFAULT_BASE_URL, DEFAULT_MODEL, load_config
-from app.services.llm import ToolAgent, ReplyWorker
+from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
+from app.services.llm import ChatAgent, ReplyWorker
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
@@ -96,6 +96,21 @@ QLineEdit#keyInput {
 }
 QToolButton#eyeButton { background: transparent; border: none; border-radius: 4px; }
 QToolButton#eyeButton:hover { background: #2d2d30; }
+QComboBox#settingsInput {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    padding: 0 8px;
+}
+QComboBox#settingsInput::drop-down { border: none; width: 24px; }
+QComboBox#settingsInput QAbstractItemView {
+    background-color: #252526;
+    color: #e0e0e0;
+    selection-background-color: #0e639c;
+    border: 1px solid #3a3a3a;
+    outline: none;
+}
 QFrame#skillRow { background: #1e1e1e; border-radius: 6px; }
 QLabel#skillName { color: #e0e0e0; font-weight: bold; }
 QLabel#skillDescription { color: #8a8a8a; font-size: 8pt; }
@@ -152,7 +167,7 @@ class App(QWidget):
         layout.setSpacing(0)
 
         self.pages = QStackedWidget()
-        self.chat_page = ChatPage(self.handle_message)
+        self.chat_page = ChatPage(self.handle_message, self.stop_worker)
         self.session_page = SessionPage(self.store, self.open_session)
         self.gallery_page = GalleryPage()
         self.pages.addWidget(self.chat_page)
@@ -182,25 +197,35 @@ class App(QWidget):
         data["messages"].append({"role": "user", "content": message})
         self.store.save(data)
         config = load_config()
-        agent = ToolAgent(
+        agent = ChatAgent(
             config.get("base_url", DEFAULT_BASE_URL),
             config.get("api_key", ""),
             config.get("model", DEFAULT_MODEL),
         )
-        self.reply_worker = ReplyWorker(agent, data["messages"])
-        self.reply_worker.reply_ready.connect(self.handle_reply)
+        self.reply_worker = ReplyWorker(
+            agent,
+            data["messages"],
+            config.get("language", DEFAULT_LANGUAGE),
+        )
+        self.reply_worker.thinking_ready.connect(self.chat_page.stream_thinking)
+        self.reply_worker.chunk_ready.connect(self.chat_page.stream_chunk)
+        self.reply_worker.tool_ready.connect(self.chat_page.stream_tool)
+        self.reply_worker.finished.connect(self.handle_finished)
+        self.chat_page.start_stream()
         self.reply_worker.start()
 
-    def handle_reply(self, reply, trace, error):
-        if error:
-            self.chat_page.append_agent(f"Error: {error}")
-            return
-        for step in trace:
-            self.chat_page.append_agent(f"[tool] {step}")
-        data = self.store.load(self.current_session["id"])
-        data["messages"].append({"role": "assistant", "content": reply})
-        self.store.save(data)
-        self.chat_page.append_agent(reply)
+    def stop_worker(self):
+        if self.reply_worker is not None and self.reply_worker.isRunning():
+            self.reply_worker.request_stop()
+        else:
+            self.chat_page.set_streaming(False)
+
+    def handle_finished(self, text, error, status):
+        save_text = self.chat_page.stream_finish(text, error, status)
+        if save_text:
+            data = self.store.load(self.current_session["id"])
+            data["messages"].append({"role": "assistant", "content": save_text})
+            self.store.save(data)
 
     def open_session(self, session_id):
         data = self.store.load(session_id)

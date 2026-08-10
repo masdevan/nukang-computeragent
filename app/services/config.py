@@ -5,6 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "config.json"
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-v4-flash"
+DEFAULT_LANGUAGE = "Indonesian"
 
 
 def load_config():

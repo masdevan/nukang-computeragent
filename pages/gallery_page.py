@@ -1,7 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QDialog, QLabel, QListWidget, QListWidgetItem, QMenu, QVBoxLayout, QWidget,
+    QDialog, QLabel, QListWidget, QListWidgetItem, QMenu, QPushButton,
+    QVBoxLayout, QWidget,
 )
 from components.confirm import ConfirmDialog
 from pathlib import Path
@@ -18,6 +19,13 @@ class GalleryPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
+        self.delete_button = QPushButton("Delete")
+        self.delete_button.setObjectName("dangerButton")
+        self.delete_button.setCursor(Qt.PointingHandCursor)
+        self.delete_button.setEnabled(False)
+        self.delete_button.clicked.connect(self.delete_selected)
+        layout.addWidget(self.delete_button, alignment=Qt.AlignLeft)
+
         self.image_list = QListWidget()
         self.image_list.setObjectName("galleryList")
         self.image_list.setViewMode(QListWidget.IconMode)
@@ -25,9 +33,11 @@ class GalleryPage(QWidget):
         self.image_list.setGridSize(QSize(THUMB_SIZE + 14, THUMB_SIZE + 34))
         self.image_list.setResizeMode(QListWidget.Adjust)
         self.image_list.setMovement(QListWidget.Static)
+        self.image_list.setSelectionMode(QListWidget.SingleSelection)
         self.image_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.image_list.customContextMenuRequested.connect(self.show_menu)
         self.image_list.itemDoubleClicked.connect(self.view_image)
+        self.image_list.itemSelectionChanged.connect(self.update_delete_state)
         layout.addWidget(self.image_list)
 
         self.reload()
@@ -43,6 +53,15 @@ class GalleryPage(QWidget):
             item.setData(Qt.UserRole, str(path))
             item.setToolTip(path.name)
             self.image_list.addItem(item)
+        self.update_delete_state()
+
+    def update_delete_state(self):
+        self.delete_button.setEnabled(self.image_list.currentItem() is not None)
+
+    def delete_selected(self):
+        item = self.image_list.currentItem()
+        if item is not None:
+            self.confirm_delete(item)
 
     def show_menu(self, pos):
         item = self.image_list.itemAt(pos)

@@ -15,6 +15,14 @@ def launch_app(name):
         return f"Failed to launch: {error}"
 
 
+def run_command(command):
+    try:
+        subprocess.Popen(["cmd", "/c", "start", "", command], shell=False)
+        return "Command executed."
+    except Exception as error:
+        return f"Failed: {error}"
+
+
 def find_app_path(name):
     exe_name = name if name.lower().endswith(".exe") else f"{name}.exe"
     registry_root = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
