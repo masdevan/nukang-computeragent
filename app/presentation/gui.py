@@ -2,7 +2,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
-from app.services.llm import ChatAgent, ReplyWorker
+from app.services.agent import ReplyWorker
+from app.services.llm import ChatAgent
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
