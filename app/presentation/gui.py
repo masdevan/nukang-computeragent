@@ -176,6 +176,7 @@ class App(QWidget):
             self.setWindowFlag(Qt.WindowDarkMode)
         except AttributeError:
             pass
+        self.setWindowFlag(Qt.WindowStaysOnTopHint)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
