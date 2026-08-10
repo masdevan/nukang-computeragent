@@ -27,6 +27,9 @@ class ScreenshotCapture:
     def capture_window(self, title, path=None):
         import pyautogui
 
+        if sys.platform != "win32":
+            print("Window capture is only supported on Windows.")
+            return None
         if path is None:
             path = default_filename("window")
         hwnd = self.find_window(title)
@@ -47,6 +50,8 @@ class ScreenshotCapture:
         return str(path)
 
     def list_windows(self):
+        if sys.platform != "win32":
+            return ["Window listing is only supported on Windows."]
         windows = []
         user32 = ctypes.windll.user32
 

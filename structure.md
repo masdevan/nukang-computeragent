@@ -40,12 +40,20 @@
 │   ├── settings_page.py
 │   └── skills_page.py
 ├── skills/
+│   ├── _mouse.py
 │   ├── app_launcher.py
+│   ├── back.py
+│   ├── double_click.py
 │   ├── file_ops.py
+│   ├── forward.py
+│   ├── hold_left_click.py
 │   ├── keyboard_controls.py
-│   ├── mouse_control.py
+│   ├── left_click.py
 │   ├── ocr.py
+│   ├── right_click.py
 │   ├── screenshot.py
+│   ├── scroll_down.py
+│   ├── scroll_up.py
 │   └── virtual_cursor.py
 └── tests/
     ├── test_device.py

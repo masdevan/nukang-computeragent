@@ -4,7 +4,8 @@ import re
 import time
 
 from app.services.device import collect_device_info, format_device_info
-from skills import app_launcher, file_ops, keyboard_controls, mouse_control, ocr, screenshot
+from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot
+from skills._mouse import xbutton
 from skills.virtual_cursor import VirtualCursor
 
 MAX_STEPS = 25
@@ -183,7 +184,7 @@ def move_by(args):
 
 def click(args):
     cursor = get_virtual_cursor()
-    x, y = cursor.position
+    x, y = cursor.final_position()
     button = args.get("button", "left")
     cursor.click_at(x, y, button)
     return f"Clicked {button} at ({x},{y})"
@@ -191,29 +192,29 @@ def click(args):
 
 def double_click(args):
     cursor = get_virtual_cursor()
-    x, y = cursor.position
+    x, y = cursor.final_position()
     cursor.double_click_at(x, y)
     return f"Double clicked at ({x},{y})"
 
 
 def scroll(args):
     cursor = get_virtual_cursor()
-    x, y = cursor.position
+    x, y = cursor.final_position()
     cursor.scroll_at(x, y, int(args["amount"]))
     return f"Scrolled at ({x},{y})"
 
 
 def position(args):
-    x, y = get_virtual_cursor().position
+    x, y = get_virtual_cursor().final_position()
     return f"Virtual cursor position: {x},{y}"
 
 
 def back(args):
-    mouse_control.MouseController().back()
+    xbutton("back")
 
 
 def forward(args):
-    mouse_control.MouseController().forward()
+    xbutton("forward")
 
 
 def capture_screen(args):

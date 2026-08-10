@@ -11,7 +11,14 @@ SKILLS_DIR = PROJECT_ROOT / "skills"
 SKILL_DESCRIPTIONS = {
     "virtual_cursor": "Second cursor, keyboard-controlled",
     "keyboard_controls": "Press key combos and type text",
-    "mouse_control": "Move, click, scroll, back/forward",
+    "left_click": "Left click with mouse",
+    "right_click": "Right click with mouse",
+    "double_click": "Double click with mouse",
+    "hold_left_click": "Hold left mouse button",
+    "scroll_down": "Scroll the mouse wheel down",
+    "scroll_up": "Scroll the mouse wheel up",
+    "back": "Press the mouse back button",
+    "forward": "Press the mouse forward button",
     "screenshot": "Capture screen or a specific window",
     "app_launcher": "Launch apps and run commands",
     "file_ops": "Read files from disk",
@@ -47,6 +54,8 @@ class SkillsPage(QWidget):
         layout.addWidget(self.skill_list)
 
         for path in sorted(SKILLS_DIR.glob("*.py")):
+            if path.stem.startswith("_"):
+                continue
             self.add_skill(path.stem)
 
     def add_skill(self, name):

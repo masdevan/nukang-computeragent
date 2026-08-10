@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 import sys
 from pathlib import Path
 
@@ -8,12 +9,68 @@ MAX_MODEL_CHARS = 12000
 
 
 def ocr_image(image_bytes):
+    if sys.platform == "win32":
+        try:
+            return asyncio.run(ocr_async(image_bytes))
+        except (ImportError, ModuleNotFoundError):
+            return None
+        except Exception as error:
+            return f"OCR failed: {error}"
+    return ocr_tesseract(image_bytes)
+
+
+def ocr_tesseract(image_bytes):
+    if shutil.which("tesseract") is None:
+        return "OCR unavailable on this platform (install tesseract)"
     try:
-        return asyncio.run(ocr_async(image_bytes))
-    except (ImportError, ModuleNotFoundError):
-        return None
-    except Exception as error:
-        return f"OCR failed: {error}"
+        from PIL import Image
+        from pytesseract import image_to_data
+
+        from io import BytesIO
+
+        image = Image.open(BytesIO(image_bytes))
+        data = image_to_data(image, output_type="dict")
+        lines = []
+        current = {}
+        for index, text in enumerate(data["text"]):
+            if text.strip() == "":
+                current = {}
+                continue
+            if current.get("line") != data["line_num"][index]:
+                if current:
+                    lines.append(finalize_line(current))
+                current = {
+                    "line": data["line_num"][index],
+                    "texts": [],
+                    "boxes": [],
+                }
+            current["texts"].append(text)
+            current["boxes"].append((
+                data["left"][index],
+                data["top"][index],
+                data["width"][index],
+                data["height"][index],
+            ))
+        if current:
+            lines.append(finalize_line(current))
+        return lines
+    except ImportError:
+        return "OCR unavailable on this platform (install pytesseract and tesseract)"
+
+
+def finalize_line(parts):
+    texts = parts["texts"]
+    left = min(box[0] for box in parts["boxes"])
+    top = min(box[1] for box in parts["boxes"])
+    right = max(box[0] + box[2] for box in parts["boxes"])
+    bottom = max(box[1] + box[3] for box in parts["boxes"])
+    box = (round(left), round(top), round(right - left), round(bottom - top))
+    center = (round((left + right) / 2), round((top + bottom) / 2))
+    words = [
+        (text, (box[0], box[1], box[2], box[3]), (round(box[0] + box[2] / 2), round(box[1] + box[3] / 2)))
+        for text, box in zip(texts, parts["boxes"])
+    ]
+    return (" ".join(texts), box, center, words)
 
 
 def ocr_file(path):

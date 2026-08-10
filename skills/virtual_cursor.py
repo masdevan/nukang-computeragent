@@ -1,14 +1,28 @@
 import sys
+import time
 
-from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPolygon, QPen
+from PySide6.QtCore import QPointF, Qt, QTimer
+from PySide6.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QApplication, QWidget
 
 STEP = 8
 FAST_STEP = 40
-ARROW_COLOR = QColor("#e8a33d")
-OUTLINE_COLOR = QColor("#1e1e1e")
-TEXT_COLOR = QColor("#e0e0e0")
+MOVE_INTERVAL = 16
+MOVE_MIN_MS = 60
+MOVE_MAX_MS = 250
+MOVE_MS_PER_PX = 0.4
+ARROW_FILL = QColor("#ffffff")
+ARROW_OUTLINE = QColor("#1e1e1e")
+
+MAC_ARROW = [
+    QPointF(0, 0),
+    QPointF(3, 17),
+    QPointF(6.5, 14.5),
+    QPointF(8.5, 21),
+    QPointF(11.5, 19.5),
+    QPointF(9.5, 13),
+    QPointF(14.5, 12),
+]
 
 
 class VirtualCursor(QWidget):
@@ -16,6 +30,13 @@ class VirtualCursor(QWidget):
         super().__init__()
         self.keyboard_control = keyboard_control
         self.position = [100, 100]
+        self.move_from = list(self.position)
+        self.move_target = list(self.position)
+        self.move_started = 0.0
+        self.move_duration = 0
+        self.move_timer = QTimer(self)
+        self.move_timer.setInterval(MOVE_INTERVAL)
+        self.move_timer.timeout.connect(self.move_step)
         self.setWindowFlags(
             Qt.FramelessWindowHint
             | Qt.WindowStaysOnTopHint
@@ -60,35 +81,54 @@ class VirtualCursor(QWidget):
 
     def move_to(self, x, y):
         screen = self.geometry()
-        self.position = [
+        target = [
             max(screen.left() + 4, min(x, screen.right() - 4)),
             max(screen.top() + 4, min(y, screen.bottom() - 4)),
         ]
+        if target == self.move_target and self.move_timer.isActive():
+            return
+        self.move_from = list(self.position)
+        self.move_target = target
+        self.move_started = time.monotonic()
+        distance = abs(target[0] - self.move_from[0]) + abs(target[1] - self.move_from[1])
+        self.move_duration = max(MOVE_MIN_MS, min(MOVE_MAX_MS, distance * MOVE_MS_PER_PX)) / 1000
+        self.move_timer.start()
+
+    def move_step(self):
+        progress = (time.monotonic() - self.move_started) / self.move_duration
+        if progress >= 1:
+            self.position = list(self.move_target)
+            self.move_timer.stop()
+        else:
+            eased = 1 - (1 - progress) ** 3
+            self.position = [
+                round(self.move_from[0] + (self.move_target[0] - self.move_from[0]) * eased),
+                round(self.move_from[1] + (self.move_target[1] - self.move_from[1]) * eased),
+            ]
         self.update()
+
+    def final_position(self):
+        if self.move_timer.isActive():
+            return list(self.move_target)
+        return list(self.position)
 
     def move_by(self, dx, dy):
         self.move_to(self.position[0] + dx, self.position[1] + dy)
 
     def click_at(self, x, y, button="left"):
-        import pyautogui
+        from skills._mouse import click
 
-        original = pyautogui.position()
-        pyautogui.click(x, y, button=button)
-        pyautogui.moveTo(original.x, original.y)
+        click(button, x, y)
 
     def double_click_at(self, x, y):
-        import pyautogui
+        from skills._mouse import click
 
-        original = pyautogui.position()
-        pyautogui.doubleClick(x, y)
-        pyautogui.moveTo(original.x, original.y)
+        click("left", x, y, clicks=2, interval=0.05)
 
     def scroll_at(self, x, y, amount):
-        import pyautogui
+        from skills._mouse import scroll
 
-        original = pyautogui.position()
-        pyautogui.scroll(amount, x, y)
-        pyautogui.moveTo(original.x, original.y)
+        scroll(amount, x, y)
 
     def quit(self):
         self.releaseKeyboard()
@@ -98,22 +138,12 @@ class VirtualCursor(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         x, y = self.position
-        points = QPolygon([
-            QPoint(x, y),
-            QPoint(x + 4, y + 20),
-            QPoint(x + 8, y + 16),
-            QPoint(x + 12, y + 24),
-            QPoint(x + 17, y + 22),
-            QPoint(x + 12, y + 13),
-            QPoint(x + 18, y + 11),
+        points = QPolygonF([
+            QPointF(x + point.x(), y + point.y()) for point in MAC_ARROW
         ])
-        painter.setPen(QPen(OUTLINE_COLOR, 2))
-        painter.setBrush(QBrush(ARROW_COLOR))
+        painter.setPen(QPen(ARROW_OUTLINE, 1))
+        painter.setBrush(QBrush(ARROW_FILL))
         painter.drawPolygon(points)
-
-        painter.setFont(QFont("Segoe UI", 8))
-        painter.setPen(QPen(TEXT_COLOR))
-        painter.drawText(x + 22, y + 10, f"{x}, {y}")
         painter.end()
 
 

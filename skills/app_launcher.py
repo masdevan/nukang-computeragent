@@ -1,15 +1,22 @@
 import os
+import shutil
 import subprocess
-import winreg
+import sys
 
 
 def launch_app(name):
     path = find_app_path(name)
     try:
         if path:
-            os.startfile(path)
+            if sys.platform == "win32":
+                os.startfile(path)
+            else:
+                subprocess.Popen([path])
             return "Launched."
-        subprocess.Popen(["cmd", "/c", "start", "", name], shell=False)
+        if sys.platform == "win32":
+            subprocess.Popen(["cmd", "/c", "start", "", name], shell=False)
+        else:
+            subprocess.Popen([name])
         return "Launched."
     except Exception as error:
         return f"Failed to launch: {error}"
@@ -17,13 +24,23 @@ def launch_app(name):
 
 def run_command(command):
     try:
-        subprocess.Popen(["cmd", "/c", "start", "", command], shell=False)
+        if sys.platform == "win32":
+            subprocess.Popen(["cmd", "/c", "start", "", command], shell=False)
+        else:
+            subprocess.Popen(command, shell=True)
         return "Command executed."
     except Exception as error:
         return f"Failed: {error}"
 
 
 def find_app_path(name):
+    found = shutil.which(name)
+    if found:
+        return found
+    if sys.platform != "win32":
+        return None
+    import winreg
+
     exe_name = name if name.lower().endswith(".exe") else f"{name}.exe"
     registry_root = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
     for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):

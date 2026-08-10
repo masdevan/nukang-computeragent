@@ -1,6 +1,6 @@
 import ctypes
 import platform
-import winreg
+import sys
 from ctypes import wintypes
 
 
@@ -14,7 +14,11 @@ def collect_device_info():
 
 
 def os_name():
+    if sys.platform != "win32":
+        return platform.platform()
     try:
+        import winreg
+
         with winreg.OpenKey(
             winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
         ) as key:
@@ -51,7 +55,11 @@ def screen_info():
 
 
 def cpu_name():
+    if sys.platform != "win32":
+        return platform.processor()
     try:
+        import winreg
+
         with winreg.OpenKey(
             winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0"
         ) as key:
