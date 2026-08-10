@@ -21,6 +21,7 @@ SKILL_DESCRIPTIONS = {
     "forward": "Press the mouse forward button",
     "screenshot": "Capture screen or a specific window",
     "app_launcher": "Launch apps and run commands",
+    "window_focus": "Focus a window by title",
     "file_ops": "Read files from disk",
     "ocr": "Extract text with coordinates from screenshots",
 }

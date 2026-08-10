@@ -4,7 +4,7 @@ import re
 import time
 
 from app.services.device import collect_device_info, format_device_info
-from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot
+from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
 from skills._mouse import xbutton
 from skills.virtual_cursor import VirtualCursor
 
@@ -38,6 +38,7 @@ TOOLS = [
     {"name": "press_key", "args": "key string", "desc": "Press a single keyboard key, e.g. enter, esc, f5"},
     {"name": "type_text", "args": "text string", "desc": "Type text using the keyboard"},
     {"name": "launch_app", "args": "name string", "desc": "Launch an installed application by name, e.g. chrome, notepad, calculator"},
+    {"name": "focus_window", "args": "title string", "desc": "Bring a window to the foreground and focus it, e.g. after launching an app, before clicking or typing into it"},
     {"name": "run_command", "args": "command string", "desc": "Run a Windows command line with arguments, e.g. chrome --profile-directory=\"Profile 1\""},
     {"name": "read_file", "args": "path string", "desc": "Read a text file and return its content. Use to inspect config files like Chrome's Local State to find profile folder names"},
     {"name": "move_to", "args": "x int, y int", "desc": "Move the orange virtual cursor to screen coordinates; your real cursor stays put"},
@@ -77,6 +78,7 @@ INTERACTION PRIORITY — use the mouse first, always:
 2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win.
 3. Commands: launch_app and run_command ONLY as a fallback when mouse or keyboard cannot do the job, or for opening apps.
 When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the virtual cursor.
+After launching an app, ALWAYS bring it to focus with focus_window before clicking or typing into it.
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
@@ -160,6 +162,10 @@ def type_text(args):
 
 def launch_app(args):
     return app_launcher.launch_app(args["name"])
+
+
+def focus_window(args):
+    return window_focus.focus_window(args["title"])
 
 
 def run_command(args):
@@ -257,6 +263,7 @@ EXECUTORS = {
     "press_key": press_key,
     "type_text": type_text,
     "launch_app": launch_app,
+    "focus_window": focus_window,
     "run_command": run_command,
     "read_file": read_file,
     "move_to": move_to,
