@@ -66,11 +66,28 @@ class VirtualCursor(QWidget):
         ]
         self.update()
 
-    def click_at(self, x, y):
+    def move_by(self, dx, dy):
+        self.move_to(self.position[0] + dx, self.position[1] + dy)
+
+    def click_at(self, x, y, button="left"):
         import pyautogui
 
         original = pyautogui.position()
-        pyautogui.click(x, y)
+        pyautogui.click(x, y, button=button)
+        pyautogui.moveTo(original.x, original.y)
+
+    def double_click_at(self, x, y):
+        import pyautogui
+
+        original = pyautogui.position()
+        pyautogui.doubleClick(x, y)
+        pyautogui.moveTo(original.x, original.y)
+
+    def scroll_at(self, x, y, amount):
+        import pyautogui
+
+        original = pyautogui.position()
+        pyautogui.scroll(amount, x, y)
         pyautogui.moveTo(original.x, original.y)
 
     def quit(self):

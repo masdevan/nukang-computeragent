@@ -5,7 +5,7 @@ from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, mouse_control, ocr, screenshot
 from skills.virtual_cursor import VirtualCursor
 
-MAX_STEPS = 15
+MAX_STEPS = 25
 VIRTUAL_CURSOR = None
 
 TOOLS = [
@@ -15,12 +15,12 @@ TOOLS = [
     {"name": "launch_app", "args": "name string", "desc": "Launch an installed application by name, e.g. chrome, notepad, calculator"},
     {"name": "run_command", "args": "command string", "desc": "Run a Windows command line with arguments, e.g. chrome --profile-directory=\"Profile 1\""},
     {"name": "read_file", "args": "path string", "desc": "Read a text file and return its content. Use to inspect config files like Chrome's Local State to find profile folder names"},
-    {"name": "move_to", "args": "x int, y int", "desc": "Move the mouse cursor to screen coordinates"},
-    {"name": "move_by", "args": "dx int, dy int", "desc": "Move the mouse cursor by an offset from its current position"},
-    {"name": "click", "args": "button string", "desc": "Click mouse button at current position: left, right, or middle"},
-    {"name": "double_click", "args": "none", "desc": "Double click the left mouse button at the current position"},
-    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel, positive up, negative down"},
-    {"name": "position", "args": "none", "desc": "Report the current mouse cursor position as x,y"},
+    {"name": "move_to", "args": "x int, y int", "desc": "Move the orange virtual cursor to screen coordinates; your real cursor stays put"},
+    {"name": "move_by", "args": "dx int, dy int", "desc": "Move the virtual cursor by an offset from its current position"},
+    {"name": "click", "args": "button string", "desc": "Click mouse button at the virtual cursor position: left, right, or middle"},
+    {"name": "double_click", "args": "none", "desc": "Double click the left mouse button at the virtual cursor position"},
+    {"name": "scroll", "args": "amount int", "desc": "Scroll the mouse wheel at the virtual cursor position, positive up, negative down"},
+    {"name": "position", "args": "none", "desc": "Report the virtual cursor position as x,y"},
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
     {"name": "capture_screen", "args": "none", "desc": "Screenshot the full screen, saved automatically to the captures folder"},
@@ -49,10 +49,10 @@ After taking a screenshot, you receive its text content with screen coordinates,
 Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 
 INTERACTION PRIORITY — use the mouse first, always:
-1. Mouse: take a screenshot, read the OCR coordinates, move_to the element, then click / double_click / scroll. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
+1. Mouse: take a screenshot, read the OCR coordinates, move the orange virtual cursor with move_to, then click / double_click / scroll at its position. Use this for buttons, menus, tabs, profiles, links — anything visible on screen.
 2. Keyboard: press_combo and type_text for typing text and shortcuts like ctrl+c or win.
 3. Commands: launch_app and run_command ONLY as a fallback when mouse or keyboard cannot do the job, or for opening apps.
-When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the mouse.
+When the user asks to interact with something on screen, NEVER jump straight to a command — screenshot first, then click it with the virtual cursor.
 
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
@@ -146,28 +146,42 @@ def read_file(args):
 
 
 def move_to(args):
-    mouse_control.MouseController().move_to(int(args["x"]), int(args["y"]))
+    cursor = get_virtual_cursor()
+    cursor.show_cursor(int(args["x"]), int(args["y"]))
+    return f"Virtual cursor at {args['x']},{args['y']}"
 
 
 def move_by(args):
-    mouse_control.MouseController().move_by(int(args["dx"]), int(args["dy"]))
+    cursor = get_virtual_cursor()
+    cursor.move_by(int(args["dx"]), int(args["dy"]))
+    return f"Virtual cursor moved by {args['dx']},{args['dy']}"
 
 
 def click(args):
-    mouse_control.MouseController().click(args.get("button", "left"))
+    cursor = get_virtual_cursor()
+    x, y = cursor.position
+    button = args.get("button", "left")
+    cursor.click_at(x, y, button)
+    return f"Clicked {button} at ({x},{y})"
 
 
 def double_click(args):
-    mouse_control.MouseController().double_click()
+    cursor = get_virtual_cursor()
+    x, y = cursor.position
+    cursor.double_click_at(x, y)
+    return f"Double clicked at ({x},{y})"
 
 
 def scroll(args):
-    mouse_control.MouseController().scroll(int(args["amount"]))
+    cursor = get_virtual_cursor()
+    x, y = cursor.position
+    cursor.scroll_at(x, y, int(args["amount"]))
+    return f"Scrolled at ({x},{y})"
 
 
 def position(args):
-    pos = mouse_control.MouseController().position()
-    return f"Mouse position: {pos.x},{pos.y}"
+    x, y = get_virtual_cursor().position
+    return f"Virtual cursor position: {x},{y}"
 
 
 def back(args):

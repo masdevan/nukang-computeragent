@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
-from app.services.agent import ReplyWorker
+from app.services.agent import ReplyWorker, init_gui_bridge
 from app.services.llm import ChatAgent
 from app.services.tools import get_virtual_cursor
 from app.services.sessions import SessionStore
@@ -171,6 +171,7 @@ def apply_pure_dark(qapp):
 class App(QWidget):
     def __init__(self):
         super().__init__()
+        init_gui_bridge()
         self.store = SessionStore()
         self.current_session = None
         self.reply_worker = None

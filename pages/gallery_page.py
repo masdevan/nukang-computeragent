@@ -33,6 +33,9 @@ class GalleryPage(QWidget):
         self.image_list.setGridSize(QSize(THUMB_SIZE + 14, THUMB_SIZE + 34))
         self.image_list.setResizeMode(QListWidget.Adjust)
         self.image_list.setMovement(QListWidget.Static)
+        self.image_list.setUniformItemSizes(True)
+        self.image_list.setWordWrap(True)
+        self.image_list.setTextElideMode(Qt.ElideMiddle)
         self.image_list.setSelectionMode(QListWidget.SingleSelection)
         self.image_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.image_list.customContextMenuRequested.connect(self.show_menu)
@@ -49,11 +52,24 @@ class GalleryPage(QWidget):
     def reload(self):
         self.image_list.clear()
         for path in sorted(CAPTURES_DIR.glob("*.png"), reverse=True):
-            item = QListWidgetItem(QIcon(str(path)), path.stem)
+            item = QListWidgetItem(self.thumbnail(str(path)), path.stem)
             item.setData(Qt.UserRole, str(path))
             item.setToolTip(path.name)
             self.image_list.addItem(item)
         self.update_delete_state()
+
+    def thumbnail(self, path):
+        pixmap = QPixmap(path)
+        if pixmap.isNull():
+            return QIcon()
+        pixmap = pixmap.scaled(
+            THUMB_SIZE, THUMB_SIZE,
+            Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation,
+        )
+        left = (pixmap.width() - THUMB_SIZE) // 2
+        top = (pixmap.height() - THUMB_SIZE) // 2
+        pixmap = pixmap.copy(left, top, THUMB_SIZE, THUMB_SIZE)
+        return QIcon(pixmap)
 
     def update_delete_state(self):
         self.delete_button.setEnabled(self.image_list.currentItem() is not None)

@@ -2,7 +2,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-MAX_MODEL_CHARS = 6000
+MAX_MODEL_CHARS = 12000
 
 
 def ocr_image(image_bytes):
@@ -43,20 +43,33 @@ async def ocr_async(image_bytes):
     for line in result.lines:
         if not line.words:
             continue
+        words = []
+        for word in line.words:
+            rect = word.bounding_rect
+            words.append((
+                word.text,
+                (round(rect.x), round(rect.y), round(rect.width), round(rect.height)),
+                (round(rect.x + rect.width / 2), round(rect.y + rect.height / 2)),
+            ))
         left = min(word.bounding_rect.x for word in line.words)
         top = min(word.bounding_rect.y for word in line.words)
         right = max(word.bounding_rect.x + word.bounding_rect.width for word in line.words)
         bottom = max(word.bounding_rect.y + word.bounding_rect.height for word in line.words)
-        center_x = round((left + right) / 2)
-        center_y = round((top + bottom) / 2)
-        lines.append((line.text, center_x, center_y, round(right - left), round(bottom - top)))
+        box = (round(left), round(top), round(right - left), round(bottom - top))
+        center = (round((left + right) / 2), round((top + bottom) / 2))
+        lines.append((line.text, box, center, words))
     return lines
 
 
 def format_lines(lines):
     if isinstance(lines, str):
         return lines
-    return "\n".join(f'"{text}" at ({x}, {y})' for text, x, y, w, h in lines)
+    output = []
+    for text, box, center, words in lines:
+        output.append(f'"{text}" box{box} center{center}')
+        for word_text, word_box, word_center in words:
+            output.append(f'  "{word_text}" box{word_box} center{word_center}')
+    return "\n".join(output)
 
 
 def write_ocr_sidecar(png_path):
