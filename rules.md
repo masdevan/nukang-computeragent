@@ -12,3 +12,4 @@
 - Never push to git unless explicitly asked
 - Every commit message must start with a feat: or fix: prefix (init: only for the first commit), followed by a short, clear, concise English description
 - When running tests, keep output short so the terminal never looks frozen: run only the relevant file (php artisan test --filter=...), never pipe output through Select-String (it buffers everything until the process ends), and avoid commands that dump large HTML into the console; if a run gets huge, redirect output to a file instead
+- No __init__.py files anywhere in the project
