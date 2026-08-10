@@ -8,6 +8,7 @@ from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
 from pages.gallery_page import GalleryPage
+from pages.info_page import InfoPage
 from pages.session_page import SessionPage
 from pages.settings_page import SettingsPage
 from pages.skills_page import SkillsPage
@@ -124,6 +125,12 @@ QPushButton#saveButton {
 }
 QPushButton#saveButton:hover { background-color: #1177bb; }
 QLabel#statusLabel { color: #6a9955; }
+QLabel#infoMuted { color: #8a8a8a; }
+QLabel#infoCreator {
+    color: #e0e0e0;
+    font-size: 14pt;
+    font-weight: bold;
+}
 QScrollBar:vertical { background: #252526; width: 12px; }
 QScrollBar::handle:vertical { background: #3a3a3a; border-radius: 6px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
@@ -176,6 +183,7 @@ class App(QWidget):
         self.pages.addWidget(SkillsPage())
         self.pages.addWidget(self.gallery_page)
         self.pages.addWidget(SettingsPage())
+        self.pages.addWidget(InfoPage())
 
         self.sidebar = Sidebar([
             "components/icons/chat.svg",
@@ -183,6 +191,7 @@ class App(QWidget):
             "components/icons/skills.svg",
             "components/icons/image.svg",
             "components/icons/settings.svg",
+            "components/icons/info.svg",
         ])
         self.sidebar.group.idClicked.connect(self.pages.setCurrentIndex)
 
