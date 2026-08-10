@@ -5,6 +5,7 @@ import time
 
 from app.services.device import collect_device_info, format_device_info
 from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
+from skills import app_refocus as app_refocus_skill
 from skills import close_app as close_app_skill
 from skills import drag as drag_skill
 from skills import find_and_click as find_and_click_skill
@@ -36,6 +37,7 @@ TOOLS = [
     {"name": "type_text", "args": "text string", "desc": "Type text using the keyboard"},
     {"name": "launch_app", "args": "name string", "desc": "Launch an installed application by name, e.g. chrome, notepad, calculator"},
     {"name": "focus_window", "args": "title string", "desc": "Bring a window to the foreground and focus it, e.g. after launching an app, before clicking or typing into it"},
+    {"name": "app_refocus", "args": "title string", "desc": "Bring an app that is covered by other windows to the front — use it when a window you need is open but hidden behind others, BEFORE closing and reopening it"},
     {"name": "close_app", "args": "title string", "desc": "Close a window gracefully by its title, e.g. close_app(Notepad). Never use alt+f4"},
     {"name": "run_command", "args": "command string", "desc": "Run a Windows command line with arguments, e.g. chrome --profile-directory=\"Profile 1\""},
     {"name": "read_file", "args": "path string", "desc": "Read a text file and return its content. Use to inspect config files like Chrome's Local State to find profile folder names"},
@@ -90,6 +92,7 @@ For precise clicks on coordinates, use try_click(x, y, expected_result) — it t
 If a window closes after a click, recover: press Esc, then re-open the app if needed, and continue. Never ask the user for environment details.
 Plan your attempt list silently. Execute attempts back-to-back; do not narrate every step. Report only the final result and what was tried.
 If any window (including the Nukang app) blocks the target, drag it out of the way with drag() — or the app moves itself automatically.
+If a window you need is open but covered by other apps, use app_refocus(title) to bring it forward — do not close and reopen it.
 After launching an app, ALWAYS bring it to focus with focus_window before clicking or typing into it.
 To close an app, use close_app(title) — never alt+f4.
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
@@ -180,6 +183,10 @@ def launch_app(args):
 
 def focus_window(args):
     return window_focus.focus_window(args["title"])
+
+
+def app_refocus(args):
+    return app_refocus_skill.app_refocus(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
 
 
 def close_app(args):
@@ -398,6 +405,7 @@ EXECUTORS = {
     "type_text": type_text,
     "launch_app": launch_app,
     "focus_window": focus_window,
+    "app_refocus": app_refocus,
     "close_app": close_app,
     "run_command": run_command,
     "read_file": read_file,

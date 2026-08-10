@@ -24,6 +24,7 @@ SKILL_DESCRIPTIONS = {
     "screenshot": "Capture screen or a specific window",
     "app_launcher": "Launch apps and run commands",
     "window_focus": "Focus a window by title",
+    "app_refocus": "Bring a covered app to the front",
     "close_app": "Close a window gracefully by title",
     "file_ops": "Read files from disk",
     "ocr": "Extract text with coordinates from screenshots",

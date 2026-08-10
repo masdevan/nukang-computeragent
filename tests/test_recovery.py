@@ -36,6 +36,9 @@ def build_harness(monkeypatch, state_machine):
         events["launched"] += 1
         state["name"] = "open2"
 
+    def fake_refocus(name):
+        events["refocused"] = events.get("refocused", 0) + 1
+
     monkeypatch.setattr(_click_try, "capture_lines", fake_capture)
     monkeypatch.setattr(_click_try, "move_to", lambda x, y: None)
     monkeypatch.setattr(_click_try, "click", fake_click)
@@ -43,6 +46,7 @@ def build_harness(monkeypatch, state_machine):
     monkeypatch.setattr(find_and_click.KeyboardController, "press_combo", fake_esc)
     monkeypatch.setattr("skills.close_app.close_app", fake_close)
     monkeypatch.setattr("skills.app_launcher.launch_app", fake_launch)
+    monkeypatch.setattr("skills.app_refocus.app_refocus", fake_refocus)
     return events, clicks
 
 
@@ -77,6 +81,7 @@ def test_context_lost_recovers_then_succeeds(monkeypatch):
     )
     assert "success" in result
     assert events["esc"] >= 1
+    assert events["refocused"] >= 1
     assert events["closed"] == 1
     assert events["launched"] == 1
 

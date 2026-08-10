@@ -60,8 +60,12 @@ def recover(wanted, app_name):
     if locate(wanted) is not None:
         return True
     if app_name:
-        from skills import app_launcher, close_app
+        from skills import app_launcher, app_refocus, close_app
 
+        app_refocus.app_refocus(app_name)
+        time.sleep(0.5)
+        if locate(wanted) is not None:
+            return True
         close_app.close_app(app_name)
         time.sleep(0.5)
         app_launcher.launch_app(app_name)

@@ -43,6 +43,7 @@
 │   ├── _click_try.py
 │   ├── _mouse.py
 │   ├── app_launcher.py
+│   ├── app_refocus.py
 │   ├── back.py
 │   ├── close_app.py
 │   ├── double_click.py
