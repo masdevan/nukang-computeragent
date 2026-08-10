@@ -1,8 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QDialog, QLabel, QListWidget, QListWidgetItem, QMenu, QPushButton,
-    QVBoxLayout, QWidget,
+    QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu,
+    QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 from components.confirm import ConfirmDialog
 from pathlib import Path
@@ -77,22 +77,38 @@ class GalleryPage(QWidget):
             self.confirm_delete(item)
 
     def view_image(self, item):
-        pixmap = QPixmap(item.data(Qt.UserRole))
+        path = Path(item.data(Qt.UserRole))
+        pixmap = QPixmap(str(path))
         if pixmap.isNull():
             return
         dialog = QDialog(self)
         dialog.setWindowTitle(item.toolTip())
-        layout = QVBoxLayout(dialog)
-        label = QLabel()
-        scaled = pixmap.scaled(VIEW_SIZE, VIEW_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        label.setPixmap(scaled)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        dialog.resize(min(scaled.width(), VIEW_SIZE) + 40, min(scaled.height(), VIEW_SIZE) + 60)
+        dialog.resize(900, 560)
+        layout = QHBoxLayout(dialog)
+        layout.setSpacing(8)
+
+        image_label = QLabel()
+        scaled = pixmap.scaled(560, 520, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        image_label.setPixmap(scaled)
+        image_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(image_label, stretch=1)
+
+        ocr_text = QTextEdit()
+        ocr_text.setObjectName("ocrViewer")
+        ocr_text.setReadOnly(True)
+        sidecar = path.with_suffix(".ocr.txt")
+        if sidecar.exists():
+            ocr_text.setPlainText(sidecar.read_text(encoding="utf-8"))
+        else:
+            ocr_text.setPlainText("(no OCR text)")
+        layout.addWidget(ocr_text, stretch=1)
+
         dialog.exec()
 
     def confirm_delete(self, item):
         dialog = ConfirmDialog(self, "Delete this image?")
         if dialog.exec() == QDialog.Accepted:
-            Path(item.data(Qt.UserRole)).unlink(missing_ok=True)
+            path = Path(item.data(Qt.UserRole))
+            path.unlink(missing_ok=True)
+            path.with_suffix(".ocr.txt").unlink(missing_ok=True)
             self.reload()

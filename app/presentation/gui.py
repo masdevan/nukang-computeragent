@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication, QHBoxLayout, QStackedWidget, QWidget
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config
 from app.services.agent import ReplyWorker
 from app.services.llm import ChatAgent
+from app.services.tools import get_virtual_cursor
 from app.services.sessions import SessionStore
 from components.sidebar import Sidebar
 from pages.chat_page import ChatPage
@@ -125,6 +126,12 @@ QPushButton#saveButton {
 }
 QPushButton#saveButton:hover { background-color: #1177bb; }
 QLabel#statusLabel { color: #6a9955; }
+QTextEdit#ocrViewer {
+    background-color: #1e1e1e;
+    color: #9da5b4;
+    border: 1px solid #333333;
+    font-size: 8pt;
+}
 QLabel#infoMuted { color: #8a8a8a; }
 QLabel#infoCreator {
     color: #e0e0e0;
@@ -198,6 +205,10 @@ class App(QWidget):
         layout.addWidget(self.sidebar)
         layout.addWidget(self.divider_strip())
         layout.addWidget(self.pages, stretch=1)
+
+        screen = self.screen().geometry()
+        center = screen.center()
+        get_virtual_cursor().show_cursor(center.x(), center.y())
 
     def handle_message(self, message):
         if self.current_session is None:

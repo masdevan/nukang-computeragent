@@ -15,6 +15,7 @@ SKILL_DESCRIPTIONS = {
     "screenshot": "Capture screen or a specific window",
     "app_launcher": "Launch apps and run commands",
     "file_ops": "Read files from disk",
+    "ocr": "Extract text with coordinates from screenshots",
 }
 
 

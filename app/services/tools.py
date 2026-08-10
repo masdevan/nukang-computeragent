@@ -1,7 +1,7 @@
 import json
 import re
 
-from skills import app_launcher, file_ops, keyboard_controls, mouse_control, screenshot
+from skills import app_launcher, file_ops, keyboard_controls, mouse_control, ocr, screenshot
 from skills.virtual_cursor import VirtualCursor
 
 MAX_STEPS = 6
@@ -41,7 +41,8 @@ Available tools:
 {tools}
 
 After each tool result, continue until the task is done.
-You cannot see images: screenshots are only saved for the user. Navigate using keyboard shortcuts (press_combo), window titles (list_windows), and config files (read_file).
+After taking a screenshot, you receive its text content with screen coordinates, e.g. "Devan Yudistira" at (960, 40).
+Use this to find elements: move_to the element's coordinates, then click — behave like a human using the computer.
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
 Never say you cannot physically do something on this computer.
@@ -148,11 +149,17 @@ def forward(args):
 
 
 def capture_screen(args):
-    return screenshot.ScreenshotCapture().capture_screen()
+    capture = screenshot.ScreenshotCapture()
+    path = capture.capture_screen()
+    return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
 
 
 def capture_window(args):
-    return screenshot.ScreenshotCapture().capture_window(args["title"])
+    capture = screenshot.ScreenshotCapture()
+    path = capture.capture_window(args["title"])
+    if path is None:
+        return "Window not found"
+    return f"Saved: {path}\n{ocr.write_ocr_sidecar(path)}"
 
 
 def list_windows(args):
