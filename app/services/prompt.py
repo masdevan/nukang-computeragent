@@ -8,6 +8,11 @@ TOOLS = [
     {"name": "focus_window", "args": "title string", "desc": "Bring a window to the foreground and focus it, e.g. after launching an app, before clicking or typing into it"},
     {"name": "app_refocus", "args": "title string", "desc": "Bring an app that is covered by other windows to the front — use it when a window you need is open but hidden behind others, BEFORE closing and reopening it"},
     {"name": "close_app", "args": "title string", "desc": "Close a window gracefully by its title, e.g. close_app(Notepad). Never use alt+f4"},
+    {"name": "expand_window", "args": "title string", "desc": "Maximize a window by its title"},
+    {"name": "minimize_window", "args": "title string", "desc": "Minimize a window by its title"},
+    {"name": "hide_window", "args": "title string", "desc": "Hide a window by its title"},
+    {"name": "switch_app", "args": "direction string", "desc": "Switch to the next or previous app, like Alt+Tab — direction: next or previous"},
+    {"name": "switch_desktop", "args": "direction string", "desc": "Switch to the next or previous virtual desktop — direction: next or previous"},
     {"name": "run_command", "args": "command string", "desc": "Run a Windows command line with arguments, e.g. chrome --profile-directory=\"Profile 1\""},
     {"name": "read_file", "args": "path string", "desc": "Read a text file and return its content. Use to inspect config files like Chrome's Local State to find profile folder names"},
     {"name": "move_to", "args": "x int, y int", "desc": "Move the mouse cursor to screen coordinates"},
@@ -65,6 +70,7 @@ If any window (including the Nukang app) blocks the target, drag it out of the w
 If a window you need is open but covered by other apps, use app_refocus(title) to bring it forward — do not close and reopen it.
 After launching an app, ALWAYS bring it to focus with focus_window before clicking or typing into it.
 To close an app, use close_app(title) — never alt+f4.
+To control windows: expand_window(title) to maximize, minimize_window(title) or hide_window(title), switch_app() for Alt+Tab, switch_desktop() for virtual desktops.
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 read_file reads files for you — NEVER use run_command or launch_app to read or open files; run_command is only for launching apps with arguments.

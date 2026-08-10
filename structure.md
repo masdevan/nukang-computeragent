@@ -52,17 +52,21 @@
 │   ├── close_app.py
 │   ├── double_click.py
 │   ├── drag.py
+│   ├── expand_window.py
 │   ├── file_ops.py
 │   ├── find_and_click.py
 │   ├── forward.py
 │   ├── hold_left_click.py
 │   ├── keyboard_controls.py
 │   ├── left_click.py
+│   ├── minimize_window.py
 │   ├── ocr.py
 │   ├── right_click.py
 │   ├── screenshot.py
 │   ├── scroll_down.py
 │   ├── scroll_up.py
+│   ├── switch_app.py
+│   ├── switch_desktop.py
 │   ├── try_click.py
 │   └── window_focus.py
 └── tests/

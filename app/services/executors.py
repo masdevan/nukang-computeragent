@@ -6,7 +6,11 @@ from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, w
 from skills import app_refocus as app_refocus_skill
 from skills import close_app as close_app_skill
 from skills import drag as drag_skill
+from skills import expand_window as expand_window_skill
 from skills import find_and_click as find_and_click_skill
+from skills import minimize_window as minimize_window_skill
+from skills import switch_app as switch_app_skill
+from skills import switch_desktop as switch_desktop_skill
 from skills import try_click as try_click_skill
 from skills._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
 
@@ -50,6 +54,26 @@ def app_refocus(args):
 
 def close_app(args):
     return close_app_skill.close_app(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
+
+
+def expand_window(args):
+    return expand_window_skill.expand_window(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
+
+
+def minimize_window(args):
+    return minimize_window_skill.minimize_window(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
+
+
+def hide_window(args):
+    return minimize_window_skill.hide_window(args["title"], protected_hwnd=MAIN_WINDOW_HWND)
+
+
+def switch_app(args):
+    return switch_app_skill.switch_app(args.get("direction", "next"))
+
+
+def switch_desktop(args):
+    return switch_desktop_skill.switch_desktop(args.get("direction", "next"))
 
 
 def run_command(args):
@@ -192,6 +216,11 @@ EXECUTORS = {
     "focus_window": focus_window,
     "app_refocus": app_refocus,
     "close_app": close_app,
+    "expand_window": expand_window,
+    "minimize_window": minimize_window,
+    "hide_window": hide_window,
+    "switch_app": switch_app,
+    "switch_desktop": switch_desktop,
     "run_command": run_command,
     "read_file": read_file,
     "move_to": move_to,

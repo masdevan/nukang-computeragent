@@ -26,6 +26,10 @@ SKILL_DESCRIPTIONS = {
     "window_focus": "Focus a window by title",
     "app_refocus": "Bring a covered app to the front",
     "close_app": "Close a window gracefully by title",
+    "expand_window": "Maximize a window by title",
+    "minimize_window": "Minimize or hide a window",
+    "switch_app": "Alt+Tab style app switching",
+    "switch_desktop": "Switch virtual desktop",
     "file_ops": "Read files from disk",
     "ocr": "Extract text with coordinates from screenshots",
 }

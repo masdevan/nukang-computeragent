@@ -1,9 +1,10 @@
 from app.services.executors import (
     EXECUTORS, app_refocus, back, capture_region, capture_screen, click,
-    close_app, double_click, drag, execute_tool, find_and_click,
-    focus_window, forward, get_device_info, launch_app, list_desktops,
-    list_windows, move_by, move_to, position, press_combo, press_key,
-    read_file, run_command, scroll, try_click, type_text,
+    close_app, double_click, drag, execute_tool, expand_window, find_and_click,
+    focus_window, forward, get_device_info, hide_window, launch_app,
+    list_desktops, list_windows, minimize_window, move_by, move_to, position,
+    press_combo, press_key, read_file, run_command, scroll, switch_app,
+    switch_desktop, try_click, type_text,
 )
 from app.services.parser import (
     extract_json_blocks, format_call, looks_like_tool_attempt, parse_tool_call,
