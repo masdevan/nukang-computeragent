@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import app_refocus
+from skills.general import app_refocus
 
 
 def fake_user32(monkeypatch, calls, foreground_hwnd):

@@ -1,4 +1,4 @@
-import ctypes
+﻿import ctypes
 import ctypes.wintypes
 import sys
 

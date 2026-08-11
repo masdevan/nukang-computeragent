@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import file_ops
+from skills.general import file_ops
 
 
 def test_read_file_expands_env_vars(tmp_path, monkeypatch):

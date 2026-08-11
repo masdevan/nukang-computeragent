@@ -1,12 +1,12 @@
-import sys
+﻿import sys
 import time
 
-from skills._click_try import (
+from skills.general._click_try import (
     attempt_loop, click_candidates, context_still_open, scan_direction,
 )
-from skills._mouse import click as mouse_click, current_position, move_to as mouse_move_to
-from skills.keyboard_controls import KeyboardController
-from skills.screenshot import ScreenshotCapture
+from skills.general._mouse import click as mouse_click, current_position, move_to as mouse_move_to
+from skills.general.keyboard_controls import KeyboardController
+from skills.general.screenshot import ScreenshotCapture
 
 SCROLL_NOTCHES = 4
 RECOVERY_ROUNDS = 2
@@ -60,7 +60,7 @@ def recover(wanted, app_name):
     if locate(wanted) is not None:
         return True
     if app_name:
-        from skills import app_launcher, app_refocus, close_app
+        from skills.general import app_launcher, app_refocus, close_app
 
         app_refocus.app_refocus(app_name)
         time.sleep(0.5)

@@ -3,6 +3,7 @@ pyautogui
 Pillow
 openai
 pytest
+websocket-client
 winrt-runtime
 winrt-Windows.Foundation
 winrt-Windows.Foundation.Collections

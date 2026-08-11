@@ -1,22 +1,23 @@
-from app.services.device import collect_device_info, format_device_info
+﻿from app.services.device import collect_device_info, format_device_info
 from app.services.window_manager import (
     MAIN_WINDOW_HWND, reposition_app_away, reposition_app_to_corner,
 )
-from skills import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
-from skills import app_refocus as app_refocus_skill
-from skills import close_app as close_app_skill
-from skills import drag as drag_skill
-from skills import expand_window as expand_window_skill
-from skills import find_and_click as find_and_click_skill
-from skills import minimize_window as minimize_window_skill
-from skills import switch_app as switch_app_skill
-from skills import switch_desktop as switch_desktop_skill
-from skills import try_click as try_click_skill
-from skills._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
+from skills.chrome import chrome_shortcuts, chrome_tabs
+from skills.general import app_launcher, file_ops, keyboard_controls, ocr, screenshot, window_focus
+from skills.general import app_refocus as app_refocus_skill
+from skills.general import close_app as close_app_skill
+from skills.general import drag as drag_skill
+from skills.general import expand_window as expand_window_skill
+from skills.general import find_and_click as find_and_click_skill
+from skills.general import minimize_window as minimize_window_skill
+from skills.general import switch_app as switch_app_skill
+from skills.general import switch_desktop as switch_desktop_skill
+from skills.general import try_click as try_click_skill
+from skills.general._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
 
 
 def recall_observations(args):
-    from skills.screenshot import current_session
+    from skills.general.screenshot import current_session
 
     return ocr.session_ocr_texts(current_session(), args.get("limit"))
 
@@ -252,4 +253,22 @@ EXECUTORS = {
     "list_windows": list_windows,
     "list_desktops": list_desktops,
     "get_device_info": get_device_info,
+    "chrome_list_tabs": chrome_tabs.chrome_list_tabs,
+    "chrome_switch_tab": chrome_tabs.chrome_switch_tab,
+    "chrome_page_text": chrome_tabs.chrome_page_text,
+    "chrome_evaluate": chrome_tabs.chrome_evaluate,
+    "chrome_enable_debugging": chrome_tabs.chrome_enable_debugging,
+    "chrome_new_tab": chrome_shortcuts.chrome_new_tab,
+    "chrome_close_tab": chrome_shortcuts.chrome_close_tab,
+    "chrome_reopen_tab": chrome_shortcuts.chrome_reopen_tab,
+    "chrome_next_tab": chrome_shortcuts.chrome_next_tab,
+    "chrome_prev_tab": chrome_shortcuts.chrome_prev_tab,
+    "chrome_new_window": chrome_shortcuts.chrome_new_window,
+    "chrome_incognito": chrome_shortcuts.chrome_incognito,
+    "chrome_address": chrome_shortcuts.chrome_address,
+    "chrome_search": chrome_shortcuts.chrome_search,
+    "chrome_reload": chrome_shortcuts.chrome_reload,
+    "chrome_find": chrome_shortcuts.chrome_find,
+    "chrome_history": chrome_shortcuts.chrome_history,
+    "chrome_downloads": chrome_shortcuts.chrome_downloads,
 }

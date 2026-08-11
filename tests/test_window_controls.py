@@ -1,10 +1,10 @@
-import ctypes
+﻿import ctypes
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import expand_window, minimize_window, switch_app, switch_desktop
+from skills.general import expand_window, minimize_window, switch_app, switch_desktop
 
 
 def test_expand_windows_maximizes(monkeypatch):
@@ -69,10 +69,12 @@ def test_switch_desktop_dispatch(monkeypatch):
 
 
 def test_tools_registry_sync():
-    from app.services.prompt import TOOLS
+    from app.services.prompt import CHROME_TOOLS, TOOLS
     from app.services.executors import EXECUTORS
 
     names = {tool["name"] for tool in TOOLS}
-    assert names == set(EXECUTORS)
+    chrome_names = {tool["name"] for tool in CHROME_TOOLS}
+    assert names == set(EXECUTORS) - chrome_names
+    assert chrome_names <= set(EXECUTORS)
     for expected in ("expand_window", "minimize_window", "hide_window", "switch_app", "switch_desktop"):
         assert expected in names

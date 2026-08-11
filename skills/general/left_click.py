@@ -1,7 +1,7 @@
-import sys
+﻿import sys
 import time
 
-from skills._mouse import click
+from skills.general._mouse import click
 
 CLICK_DELAY = 1
 
@@ -13,13 +13,13 @@ def main():
     if len(args) == 2:
         x, y = int(args[0]), int(args[1])
     target = f"({x}, {y})" if x is not None else "(current cursor position)"
-    print(f"Double click at {target} in {CLICK_DELAY}s... move the mouse if needed.")
+    print(f"Left click at {target} in {CLICK_DELAY}s... move the mouse if needed.")
     time.sleep(CLICK_DELAY)
     if noop:
         print("Dry run, nothing clicked.")
         return
-    click("left", x, y, clicks=2, interval=0.05)
-    print("Double click done.")
+    click("left", x, y)
+    print("Left click done.")
 
 
 if __name__ == "__main__":

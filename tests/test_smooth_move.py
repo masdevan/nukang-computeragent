@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import _mouse
+from skills.general import _mouse
 
 
 def test_smooth_steps_end_at_target():

@@ -4,7 +4,7 @@ from ctypes import wintypes
 from datetime import datetime
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CAPTURES_DIR = PROJECT_ROOT / "data" / "captures"
 _current_session = ""
 

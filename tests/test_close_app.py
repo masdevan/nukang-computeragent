@@ -1,4 +1,4 @@
-from skills import close_app
+﻿from skills.general import close_app
 
 
 def test_refuses_protected_window(monkeypatch):

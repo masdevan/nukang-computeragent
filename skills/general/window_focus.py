@@ -1,6 +1,6 @@
-import sys
+﻿import sys
 
-from skills.screenshot import ScreenshotCapture
+from skills.general.screenshot import ScreenshotCapture
 
 
 def focus_window(title):

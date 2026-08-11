@@ -32,6 +32,8 @@ SKILL_DESCRIPTIONS = {
     "switch_desktop": "Switch virtual desktop",
     "file_ops": "Read files from disk",
     "ocr": "Extract text with coordinates from screenshots",
+    "chrome_shortcuts": "Chrome keyboard shortcuts: tabs, search, reload, history",
+    "chrome_tabs": "Chrome DevTools Protocol: list tabs, read page text, run JS",
 }
 
 
@@ -62,7 +64,7 @@ class SkillsPage(QWidget):
         self.skill_list.setSelectionMode(QListWidget.NoSelection)
         layout.addWidget(self.skill_list)
 
-        for path in sorted(SKILLS_DIR.glob("*.py")):
+        for path in sorted(SKILLS_DIR.glob("*/*.py")):
             if path.stem.startswith("_"):
                 continue
             self.add_skill(path.stem)

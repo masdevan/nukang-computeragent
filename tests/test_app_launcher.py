@@ -1,4 +1,4 @@
-from skills.app_launcher import launch_app, resolve_command_token
+﻿from skills.general.app_launcher import launch_app, resolve_command_token
 
 
 def test_launch_unknown_app_returns_error():

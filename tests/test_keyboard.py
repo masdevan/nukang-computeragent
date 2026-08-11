@@ -1,4 +1,4 @@
-from skills.keyboard_controls import parse_combo
+﻿from skills.general.keyboard_controls import parse_combo
 
 
 def test_modifier_combo():

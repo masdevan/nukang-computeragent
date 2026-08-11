@@ -1,4 +1,4 @@
-from app.services.executors import (
+﻿from app.services.executors import (
     EXECUTORS, app_refocus, back, capture_region, capture_screen, click,
     close_app, double_click, drag, execute_tool, expand_window, find_and_click,
     focus_window, forward, get_device_info, hide_window, launch_app,
@@ -15,5 +15,5 @@ from app.services.window_manager import (
     main_window_rect, move_window, reposition_app_away, reposition_app_to_corner,
     set_main_window, window_handle_valid,
 )
-from skills import ocr, screenshot
-from skills._mouse import current_position, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
+from skills.general import ocr, screenshot
+from skills.general._mouse import current_position, move_to as mouse_move_to, scroll as mouse_scroll, xbutton

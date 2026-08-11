@@ -1,7 +1,7 @@
-import sys
+﻿import sys
 import time
 
-from skills._mouse import mouse_down, mouse_up, move_to
+from skills.general._mouse import mouse_down, mouse_up, move_to
 
 DRAG_STEPS = 12
 

@@ -1,7 +1,7 @@
-import sys
+﻿import sys
 import time
 
-from skills.keyboard_controls import KeyboardController
+from skills.general.keyboard_controls import KeyboardController
 
 COMBOS = {
     "next": "alt+tab",

@@ -1,4 +1,4 @@
-from PySide6.QtCore import QSize, Qt
+﻿from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (
 from app.services.config import DEFAULT_BASE_URL, DEFAULT_LANGUAGE, DEFAULT_MODEL, load_config, save_config
 from app.services.sessions import DATA_DIR as SESSIONS_DIR
 from components.confirm import ConfirmDialog
-from skills.ocr import OCR_DIR
-from skills.screenshot import CAPTURES_DIR
+from skills.general.ocr import OCR_DIR
+from skills.general.screenshot import CAPTURES_DIR
 import json
 from pathlib import Path
 

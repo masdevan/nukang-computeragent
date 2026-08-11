@@ -1,6 +1,6 @@
-from app.services import executors
-from skills import screenshot
-from skills import ocr as ocr_module
+﻿from app.services import executors
+from skills.general import screenshot
+from skills.general import ocr as ocr_module
 
 
 def test_default_filename_has_session_prefix():

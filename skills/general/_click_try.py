@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 import time
 
-from skills import ocr
-from skills._mouse import click as mouse_click, current_position, move_to as mouse_move_to, scroll as mouse_scroll
-from skills.screenshot import ScreenshotCapture
+from skills.general import ocr
+from skills.general._mouse import click as mouse_click, current_position, move_to as mouse_move_to, scroll as mouse_scroll
+from skills.general.screenshot import ScreenshotCapture
 
 MAX_PHASE_ITERATIONS = 8
 SCROLL_NOTCHES = 4
@@ -82,7 +82,7 @@ def verify_success(expect_text, before_texts, context=None):
 
 def window_title_matches(expect_text):
     try:
-        from skills.screenshot import ScreenshotCapture
+        from skills.general.screenshot import ScreenshotCapture
 
         titles = ScreenshotCapture().list_windows()
     except Exception:

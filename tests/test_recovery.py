@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import _click_try, find_and_click
+from skills.general import _click_try, find_and_click
 
 CONTEXT_LINE = ("Who's using Chrome?", (100, 100, 200, 30), (200, 115), [])
 TARGET_LINE = ("Devan Yudistira", (100, 300, 200, 30), (200, 315), [])
@@ -44,9 +44,9 @@ def build_harness(monkeypatch, state_machine):
     monkeypatch.setattr(_click_try, "click", fake_click)
     monkeypatch.setattr(_click_try.time, "sleep", lambda s: None)
     monkeypatch.setattr(find_and_click.KeyboardController, "press_combo", fake_esc)
-    monkeypatch.setattr("skills.close_app.close_app", fake_close)
-    monkeypatch.setattr("skills.app_launcher.launch_app", fake_launch)
-    monkeypatch.setattr("skills.app_refocus.app_refocus", fake_refocus)
+    monkeypatch.setattr("skills.general.close_app.close_app", fake_close)
+    monkeypatch.setattr("skills.general.app_launcher.launch_app", fake_launch)
+    monkeypatch.setattr("skills.general.app_refocus.app_refocus", fake_refocus)
     return events, clicks
 
 

@@ -1,7 +1,7 @@
-import ctypes
+﻿import ctypes
 import sys
 
-from skills.close_app import find_window_hwnd
+from skills.general.close_app import find_window_hwnd
 
 SW_RESTORE = 9
 

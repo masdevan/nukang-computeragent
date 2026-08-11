@@ -1,10 +1,10 @@
-import sys
+﻿import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import drag
+from skills.general import drag
 
 
 def test_drag_calls_mouse_sequence(monkeypatch):

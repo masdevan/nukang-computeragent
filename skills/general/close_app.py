@@ -1,4 +1,4 @@
-import ctypes
+﻿import ctypes
 import sys
 
 WM_CLOSE = 0x0010
@@ -17,7 +17,7 @@ def close_app(title, protected_hwnd=None):
 
 
 def find_window_hwnd(title):
-    from skills.screenshot import ScreenshotCapture
+    from skills.general.screenshot import ScreenshotCapture
 
     user32 = ctypes.windll.user32
     wanted = title.lower()

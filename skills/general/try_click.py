@@ -1,7 +1,7 @@
-import sys
+﻿import sys
 import time
 
-from skills._click_try import attempt_loop, click_candidates
+from skills.general._click_try import attempt_loop, click_candidates
 
 
 def try_click(x, y, expect_text=None):

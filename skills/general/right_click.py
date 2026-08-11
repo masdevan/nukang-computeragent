@@ -1,7 +1,7 @@
-import sys
+﻿import sys
 import time
 
-from skills._mouse import click
+from skills.general._mouse import click
 
 CLICK_DELAY = 1
 

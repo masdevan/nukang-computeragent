@@ -1,10 +1,10 @@
-import sys
+﻿import sys
 import types
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from skills import _click_try, find_and_click
+from skills.general import _click_try, find_and_click
 
 FOUND_LINE = ("Devan Yudistira", (100, 100, 200, 30), (200, 115), [
     ("Devan", (100, 100, 80, 30), (140, 115)),
@@ -127,7 +127,7 @@ def test_try_click_reuses_candidates(monkeypatch):
     monkeypatch.setattr(_click_try, "click", lambda: None)
     monkeypatch.setattr(_click_try.time, "sleep", lambda s: None)
 
-    from skills import try_click
+    from skills.general import try_click
 
     result = try_click.try_click(500, 400)
     assert "All attempts failed" in result

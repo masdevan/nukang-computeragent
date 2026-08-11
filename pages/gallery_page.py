@@ -1,11 +1,11 @@
-from PySide6.QtCore import QSize, Qt
+﻿from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu,
     QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 from components.confirm import ConfirmDialog
-from skills.ocr import OCR_DIR
+from skills.general.ocr import OCR_DIR
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

@@ -1,9 +1,9 @@
-import shutil
+﻿import shutil
 import subprocess
 import sys
 import time
 
-from skills.close_app import find_window_hwnd
+from skills.general.close_app import find_window_hwnd
 
 SW_MINIMIZE = 6
 SW_HIDE = 0

@@ -1,4 +1,4 @@
-from PySide6.QtCore import QSize, Qt
+﻿from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QMouseEvent, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
@@ -20,7 +20,7 @@ def session_captures(session_id):
 
 
 def delete_session_artifacts(session_id):
-    from skills.ocr import OCR_DIR
+    from skills.general.ocr import OCR_DIR
 
     for path in list(CAPTURES_DIR.glob(f"{session_id}_*.png")) + list(OCR_DIR.glob(f"{session_id}_*.txt")):
         path.unlink(missing_ok=True)

@@ -1,4 +1,4 @@
-import ctypes
+﻿import ctypes
 import platform
 import sys
 from ctypes import wintypes
@@ -163,7 +163,7 @@ def current_desktop_guid():
     if manager is None:
         return None
     try:
-        from skills.screenshot import ScreenshotCapture
+        from skills.general.screenshot import ScreenshotCapture
 
         user32 = ctypes.windll.user32
         foreground = user32.GetForegroundWindow()
@@ -183,7 +183,7 @@ def virtual_desktops():
     if manager is None:
         return None
     try:
-        from skills.screenshot import ScreenshotCapture
+        from skills.general.screenshot import ScreenshotCapture
 
         desktops = {}
         for title in ScreenshotCapture().list_windows():

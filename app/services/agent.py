@@ -1,4 +1,4 @@
-from PySide6.QtCore import QThread, Signal
+﻿from PySide6.QtCore import QThread, Signal
 
 from app.services.tools import (
     MAX_STEPS, build_system_prompt, execute_tool, format_call,
@@ -24,10 +24,16 @@ class ReplyWorker(QThread):
         self.stop_requested = True
 
     def run(self):
-        from skills.screenshot import set_session
+        from app.services.prompt import chrome_tools_block
+        from skills.chrome._cdp import chrome_visible
+        from skills.general.screenshot import set_session
 
         set_session(self.session_id)
-        conversation = [{"role": "system", "content": build_system_prompt(self.language)}, *self.messages]
+        system_prompt = build_system_prompt(self.language)
+        chrome_announced = chrome_visible()
+        if chrome_announced:
+            system_prompt += "\n\n" + chrome_tools_block()
+        conversation = [{"role": "system", "content": system_prompt}, *self.messages]
         try:
             client = self.agent.build_client()
         except Exception as error:
@@ -94,6 +100,9 @@ class ReplyWorker(QThread):
                 recent_calls.append(tool_call)
                 conversation.append({"role": "assistant", "content": text})
                 conversation.append({"role": "user", "content": f"Tool result: {result}"})
+                if not chrome_announced and chrome_visible():
+                    chrome_announced = True
+                    conversation.append({"role": "system", "content": chrome_tools_block()})
             self.finished.emit(self.request_summary(client, conversation), "", "done")
         except Exception as error:
             self.finished.emit("", str(error), "error")

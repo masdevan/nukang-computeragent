@@ -1,6 +1,6 @@
-from pathlib import Path
+﻿from pathlib import Path
 
-from skills import ocr
+from skills.general import ocr
 
 
 def fake_lines():

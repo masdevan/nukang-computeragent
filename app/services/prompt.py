@@ -84,6 +84,44 @@ Never say you cannot physically do something on this computer.
 You may call at most {max_steps} tools per task."""
 
 
+CHROME_TOOLS = [
+    {"name": "chrome_enable_debugging", "args": "none", "desc": "Restart Chrome once with remote debugging — current Chrome windows close and tabs are restored automatically. Call ONLY when a CDP tool reports debugging is off and you really need to read page content or list tabs"},
+    {"name": "chrome_list_tabs", "args": "none", "desc": "List all open Chrome tabs with title and URL (no screenshot needed). Requires remote debugging: if it reports debugging off, call chrome_enable_debugging first"},
+    {"name": "chrome_switch_tab", "args": "index int OR url string OR title string", "desc": "Switch to a Chrome tab by list index, or by URL/text contained in the tab. Requires remote debugging"},
+    {"name": "chrome_page_text", "args": "none", "desc": "Read the text content of the active Chrome page directly (no screenshot needed). Requires remote debugging: if it reports debugging off, call chrome_enable_debugging first"},
+    {"name": "chrome_evaluate", "args": "expression string", "desc": "Run a JavaScript expression in the active Chrome page and return the result — e.g. to query elements or click by selector. Requires remote debugging"},
+    {"name": "chrome_new_tab", "args": "none", "desc": "Open a new Chrome tab (ctrl+t)"},
+    {"name": "chrome_close_tab", "args": "none", "desc": "Close the current Chrome tab (ctrl+w)"},
+    {"name": "chrome_reopen_tab", "args": "none", "desc": "Reopen the last closed Chrome tab (ctrl+shift+t)"},
+    {"name": "chrome_next_tab", "args": "none", "desc": "Switch to the next Chrome tab (ctrl+tab)"},
+    {"name": "chrome_prev_tab", "args": "none", "desc": "Switch to the previous Chrome tab (ctrl+shift+tab)"},
+    {"name": "chrome_new_window", "args": "none", "desc": "Open a new Chrome window (ctrl+n)"},
+    {"name": "chrome_incognito", "args": "none", "desc": "Open a new incognito Chrome window (ctrl+shift+n)"},
+    {"name": "chrome_address", "args": "none", "desc": "Focus the Chrome address bar (ctrl+l), then type_text to enter a URL or search"},
+    {"name": "chrome_search", "args": "query string", "desc": "Type a search or URL into the Chrome address bar and press enter"},
+    {"name": "chrome_reload", "args": "none", "desc": "Reload the current Chrome page (ctrl+r)"},
+    {"name": "chrome_find", "args": "text string", "desc": "Open Chrome find bar and type text (ctrl+f)"},
+    {"name": "chrome_history", "args": "none", "desc": "Open Chrome history (ctrl+h)"},
+    {"name": "chrome_downloads", "args": "none", "desc": "Open Chrome downloads (ctrl+j)"},
+]
+
+
+def chrome_tools_block():
+    lines = [
+        "Chrome is open, so Chrome tools are available:",
+        "",
+        "To search or navigate in Chrome, use the shortcut tools below (chrome_search, chrome_address, chrome_new_tab, ...) "
+        "together with capture_screen/OCR — they NEVER restart Chrome.",
+        "The page-reading tools (chrome_list_tabs, chrome_page_text, chrome_evaluate) require remote debugging: "
+        "if they report debugging is off, call chrome_enable_debugging first — it restarts Chrome once and restores tabs. "
+        "Do NOT call chrome_enable_debugging unless a CDP tool explicitly asked for it.",
+        "",
+    ]
+    for tool in CHROME_TOOLS:
+        lines.append(f'- {tool["name"]}({tool["args"]}): {tool["desc"]}')
+    return "\n".join(lines)
+
+
 def build_system_prompt(language):
     return SYSTEM_PROMPT.format(
         language=language,
