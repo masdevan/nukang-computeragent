@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from app.services.apps import cached_installed_apps, refresh_installed_apps
 from app.services.device import collect_device_info
 
 CREATOR_NAME = "Devan Yudistira Sugiharta"
@@ -45,6 +46,24 @@ class InfoPage(QWidget):
             layout.addWidget(row)
             self.device_rows[key] = row
 
+        apps_header = QHBoxLayout()
+        apps_header.setSpacing(8)
+        self.apps_section = QLabel("Installed Apps")
+        self.apps_section.setObjectName("infoSection")
+        apps_header.addWidget(self.apps_section)
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setObjectName("ghostButton")
+        self.refresh_button.setCursor(Qt.PointingHandCursor)
+        self.refresh_button.clicked.connect(self.refresh_apps)
+        apps_header.addWidget(self.refresh_button)
+        apps_header.addStretch(1)
+        layout.addLayout(apps_header)
+
+        self.apps_view = QTextEdit()
+        self.apps_view.setObjectName("ocrViewer")
+        self.apps_view.setReadOnly(True)
+        layout.addWidget(self.apps_view, stretch=1)
+
         layout.addStretch()
 
     def showEvent(self, event):
@@ -60,3 +79,9 @@ class InfoPage(QWidget):
                 f'<span style="color: #8a8a8a;">{key}:</span> '
                 f'<span style="color: #e0e0e0;">{safe}</span>'
             )
+        self.refresh_apps(force=False)
+
+    def refresh_apps(self, force=True):
+        apps = refresh_installed_apps() if force else cached_installed_apps()
+        self.apps_section.setText(f"Installed Apps ({len(apps)})")
+        self.apps_view.setPlainText("\n".join(apps))

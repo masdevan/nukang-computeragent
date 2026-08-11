@@ -11,6 +11,7 @@
 │   │   └── gui.py
 │   └── services/
 │       ├── agent.py
+│       ├── apps.py
 │       ├── config.py
 │       ├── device.py
 │       ├── executors.py
@@ -74,6 +75,7 @@
 │   ├── test_app_launcher.py
 │   ├── test_app_refocus.py
 │   ├── test_app_reposition.py
+│   ├── test_apps.py
 │   ├── test_capture_session.py
 │   ├── test_click_try.py
 │   ├── test_close_app.py

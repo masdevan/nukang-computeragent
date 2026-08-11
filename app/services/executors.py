@@ -21,6 +21,12 @@ def recall_observations(args):
     return ocr.session_ocr_texts(current_session(), args.get("limit"))
 
 
+def list_apps(args):
+    from app.services.apps import cached_installed_apps
+
+    return "\n".join(cached_installed_apps())
+
+
 def execute_tool(tool_call):
     name = tool_call["name"]
     args = tool_call.get("args", {})
@@ -242,6 +248,7 @@ EXECUTORS = {
     "forward": forward,
     "capture_screen": capture_screen,
     "recall_observations": recall_observations,
+    "list_apps": list_apps,
     "list_windows": list_windows,
     "list_desktops": list_desktops,
     "get_device_info": get_device_info,

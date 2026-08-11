@@ -5,6 +5,7 @@ TOOLS = [
     {"name": "press_key", "args": "key string", "desc": "Press a single keyboard key, e.g. enter, esc, f5"},
     {"name": "type_text", "args": "text string", "desc": "Type text using the keyboard"},
     {"name": "launch_app", "args": "name string", "desc": "Launch an installed application by name, e.g. chrome, notepad, calculator"},
+    {"name": "list_apps", "args": "none", "desc": "List all installed applications (classic, start menu, and store apps) — call this before launching when you are unsure an app is installed"},
     {"name": "focus_window", "args": "title string", "desc": "Bring a window to the foreground and focus it, e.g. after launching an app, before clicking or typing into it"},
     {"name": "app_refocus", "args": "title string", "desc": "Bring an app that is covered by other windows to the front — use it when a window you need is open but hidden behind others, BEFORE closing and reopening it"},
     {"name": "close_app", "args": "title string", "desc": "Close a window gracefully by its title, e.g. close_app(Notepad). Never use alt+f4"},
@@ -75,6 +76,7 @@ To control windows: expand_window(title) to maximize, minimize_window(title) or 
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 read_file reads files for you — NEVER use run_command or launch_app to read or open files; run_command is only for launching apps with arguments.
+Before launching an app, if you are unsure it is installed, call list_apps to see what is available.
 If you need to remember what was on screen earlier in this session (a previous screenshot), call recall_observations instead of taking a new screenshot.
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
