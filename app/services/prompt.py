@@ -27,6 +27,7 @@ TOOLS = [
     {"name": "back", "args": "none", "desc": "Press the mouse back button, e.g. browser back"},
     {"name": "forward", "args": "none", "desc": "Press the mouse forward button, e.g. browser forward"},
     {"name": "capture_screen", "args": "none", "desc": "Screenshot the FULL screen, saved automatically to the captures folder; you always use this one"},
+    {"name": "recall_observations", "args": "limit int optional", "desc": "Read the OCR text of screenshots taken earlier in this session — use it when you need to remember what was on screen before. limit = how many most recent observations to return (default all)"},
     {"name": "list_windows", "args": "none", "desc": "List titles of visible windows (all virtual desktops)"},
     {"name": "list_desktops", "args": "none", "desc": "List Windows virtual desktops with window counts; the active one is marked"},
     {"name": "get_device_info", "args": "none", "desc": "Report OS, screen resolution with DPI scale, CPU, and RAM — use the resolution to plan mouse coordinates"},
@@ -74,6 +75,7 @@ To control windows: expand_window(title) to maximize, minimize_window(title) or 
 You ALWAYS screenshot the full screen — there is no window-only capture. OCR coordinates are always absolute screen coordinates.
 
 read_file reads files for you — NEVER use run_command or launch_app to read or open files; run_command is only for launching apps with arguments.
+If you need to remember what was on screen earlier in this session (a previous screenshot), call recall_observations instead of taking a new screenshot.
 Before asking the user for information, find it yourself: read_file and list_windows can answer most questions. Ask the user only as a last resort.
 When the task is finished (or needs no tool), reply in plain text, briefly describing what you did.
 Never say you cannot physically do something on this computer.

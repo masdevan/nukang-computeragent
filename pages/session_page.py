@@ -1,5 +1,5 @@
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIcon, QMouseEvent
+from PySide6.QtGui import QIcon, QMouseEvent, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QPushButton, QVBoxLayout, QWidget,
@@ -8,20 +8,54 @@ from components.confirm import ConfirmDialog
 from datetime import datetime
 from pathlib import Path
 
+from pages.gallery_page import CAPTURES_DIR, show_capture_dialog
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+THUMB = 72
+
+
+def session_captures(session_id):
+    return sorted(CAPTURES_DIR.glob(f"{session_id}_*.png"))
+
+
+def delete_session_artifacts(session_id):
+    from skills.ocr import OCR_DIR
+
+    for path in list(CAPTURES_DIR.glob(f"{session_id}_*.png")) + list(OCR_DIR.glob(f"{session_id}_*.txt")):
+        path.unlink(missing_ok=True)
+
+
+class CaptureThumb(QFrame):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+        self.setFixedSize(THUMB, THUMB)
+        self.setCursor(Qt.PointingHandCursor)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel()
+        label.setPixmap(QPixmap(str(path)).scaled(THUMB, THUMB, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            show_capture_dialog(self, self.path)
 
 
 class SessionRow(QFrame):
-    def __init__(self, name, created_at, on_delete, on_open):
+    def __init__(self, name, created_at, on_delete, on_open, captures):
         super().__init__()
         self.setObjectName("sessionRow")
         self.setCursor(Qt.PointingHandCursor)
         self.on_open = on_open
 
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 0, 6, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(4)
 
+        header = QHBoxLayout()
+        header.setSpacing(8)
         text_column = QVBoxLayout()
         text_column.setSpacing(3)
         text_column.setContentsMargins(0, 0, 0, 0)
@@ -32,7 +66,7 @@ class SessionRow(QFrame):
         time_label.setObjectName("sessionTime")
         text_column.addWidget(time_label)
         text_column.addStretch(1)
-        layout.addLayout(text_column, stretch=1)
+        header.addLayout(text_column, stretch=1)
 
         delete_button = QPushButton()
         delete_button.setObjectName("deleteButton")
@@ -41,7 +75,16 @@ class SessionRow(QFrame):
         delete_button.setFixedSize(26, 26)
         delete_button.setCursor(Qt.PointingHandCursor)
         delete_button.clicked.connect(on_delete)
-        layout.addWidget(delete_button)
+        header.addWidget(delete_button)
+        layout.addLayout(header)
+
+        if captures:
+            strip = QHBoxLayout()
+            strip.setSpacing(6)
+            for path in captures[-8:]:
+                strip.addWidget(CaptureThumb(path))
+            strip.addStretch(1)
+            layout.addLayout(strip)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -93,6 +136,7 @@ class SessionPage(QWidget):
             created_at,
             lambda: self.confirm_delete(data),
             lambda: self.on_open(data["id"]),
+            session_captures(data["id"]),
         )
         row.setFixedHeight(row.sizeHint().height())
         item.setSizeHint(QSize(0, row.height() + 12))
@@ -109,7 +153,8 @@ class SessionPage(QWidget):
         return wrapper
 
     def confirm_delete(self, data):
-        dialog = ConfirmDialog(self, "Delete this session?")
+        dialog = ConfirmDialog(self, "Delete this session and its images?")
         if dialog.exec() == QDialog.Accepted:
+            delete_session_artifacts(data["id"])
             self.store.delete(data["id"])
             self.reload()

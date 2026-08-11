@@ -271,6 +271,7 @@ class App(QWidget):
             agent,
             data["messages"],
             config.get("language", DEFAULT_LANGUAGE),
+            session_id=data["id"],
         )
         self.reply_worker.thinking_ready.connect(self.chat_page.stream_thinking)
         self.reply_worker.chunk_ready.connect(self.chat_page.stream_chunk)

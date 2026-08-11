@@ -6,11 +6,22 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CAPTURES_DIR = PROJECT_ROOT / "data" / "captures"
+_current_session = ""
+
+
+def set_session(session_id):
+    global _current_session
+    _current_session = session_id or ""
+
+
+def current_session():
+    return _current_session
 
 
 def default_filename(prefix):
     CAPTURES_DIR.mkdir(parents=True, exist_ok=True)
-    return str(CAPTURES_DIR / f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+    stem = f"{_current_session}_" if _current_session else ""
+    return str(CAPTURES_DIR / f"{stem}{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
 
 
 class ScreenshotCapture:

@@ -15,6 +15,12 @@ from skills import try_click as try_click_skill
 from skills._mouse import current_position, click as mouse_click, move_to as mouse_move_to, scroll as mouse_scroll, xbutton
 
 
+def recall_observations(args):
+    from skills.screenshot import current_session
+
+    return ocr.session_ocr_texts(current_session(), args.get("limit"))
+
+
 def execute_tool(tool_call):
     name = tool_call["name"]
     args = tool_call.get("args", {})
@@ -235,6 +241,7 @@ EXECUTORS = {
     "back": back,
     "forward": forward,
     "capture_screen": capture_screen,
+    "recall_observations": recall_observations,
     "list_windows": list_windows,
     "list_desktops": list_desktops,
     "get_device_info": get_device_info,

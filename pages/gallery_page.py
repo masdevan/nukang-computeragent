@@ -14,6 +14,50 @@ THUMB_SIZE = 110
 VIEW_SIZE = 800
 
 
+def thumbnail(path, size=THUMB_SIZE):
+    pixmap = QPixmap(path)
+    if pixmap.isNull():
+        return QIcon()
+    pixmap = pixmap.scaled(
+        size, size,
+        Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation,
+    )
+    left = (pixmap.width() - size) // 2
+    top = (pixmap.height() - size) // 2
+    pixmap = pixmap.copy(left, top, size, size)
+    return QIcon(pixmap)
+
+
+def show_capture_dialog(parent, path, title=None):
+    path = Path(path)
+    pixmap = QPixmap(str(path))
+    if pixmap.isNull():
+        return
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(title or path.name)
+    dialog.resize(900, 560)
+    layout = QHBoxLayout(dialog)
+    layout.setSpacing(8)
+
+    image_label = QLabel()
+    scaled = pixmap.scaled(560, 520, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    image_label.setPixmap(scaled)
+    image_label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(image_label, stretch=1)
+
+    ocr_text = QTextEdit()
+    ocr_text.setObjectName("ocrViewer")
+    ocr_text.setReadOnly(True)
+    sidecar = OCR_DIR / f"{path.stem}.txt"
+    if sidecar.exists():
+        ocr_text.setPlainText(sidecar.read_text(encoding="utf-8"))
+    else:
+        ocr_text.setPlainText("(no OCR text)")
+    layout.addWidget(ocr_text, stretch=1)
+
+    dialog.exec()
+
+
 class GalleryPage(QWidget):
     def __init__(self):
         super().__init__()
@@ -53,24 +97,11 @@ class GalleryPage(QWidget):
     def reload(self):
         self.image_list.clear()
         for path in sorted(CAPTURES_DIR.glob("*.png"), reverse=True):
-            item = QListWidgetItem(self.thumbnail(str(path)), path.stem)
+            item = QListWidgetItem(thumbnail(str(path)), path.stem)
             item.setData(Qt.UserRole, str(path))
             item.setToolTip(path.name)
             self.image_list.addItem(item)
         self.update_delete_state()
-
-    def thumbnail(self, path):
-        pixmap = QPixmap(path)
-        if pixmap.isNull():
-            return QIcon()
-        pixmap = pixmap.scaled(
-            THUMB_SIZE, THUMB_SIZE,
-            Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation,
-        )
-        left = (pixmap.width() - THUMB_SIZE) // 2
-        top = (pixmap.height() - THUMB_SIZE) // 2
-        pixmap = pixmap.copy(left, top, THUMB_SIZE, THUMB_SIZE)
-        return QIcon(pixmap)
 
     def update_delete_state(self):
         self.delete_button.setEnabled(self.image_list.currentItem() is not None)
@@ -94,33 +125,7 @@ class GalleryPage(QWidget):
             self.confirm_delete(item)
 
     def view_image(self, item):
-        path = Path(item.data(Qt.UserRole))
-        pixmap = QPixmap(str(path))
-        if pixmap.isNull():
-            return
-        dialog = QDialog(self)
-        dialog.setWindowTitle(item.toolTip())
-        dialog.resize(900, 560)
-        layout = QHBoxLayout(dialog)
-        layout.setSpacing(8)
-
-        image_label = QLabel()
-        scaled = pixmap.scaled(560, 520, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        image_label.setPixmap(scaled)
-        image_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(image_label, stretch=1)
-
-        ocr_text = QTextEdit()
-        ocr_text.setObjectName("ocrViewer")
-        ocr_text.setReadOnly(True)
-        sidecar = OCR_DIR / f"{path.stem}.txt"
-        if sidecar.exists():
-            ocr_text.setPlainText(sidecar.read_text(encoding="utf-8"))
-        else:
-            ocr_text.setPlainText("(no OCR text)")
-        layout.addWidget(ocr_text, stretch=1)
-
-        dialog.exec()
+        show_capture_dialog(self, item.data(Qt.UserRole), item.toolTip())
 
     def confirm_delete(self, item):
         dialog = ConfirmDialog(self, "Delete this image?")

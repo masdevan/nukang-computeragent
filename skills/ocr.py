@@ -149,6 +149,20 @@ def write_ocr_sidecar(png_path):
     return text
 
 
+def session_ocr_texts(session_id, limit=None):
+    if not session_id:
+        return "No session context."
+    files = sorted(OCR_DIR.glob(f"{session_id}_*.txt"))
+    if not files:
+        return "No observations yet in this session."
+    if limit:
+        files = files[-int(limit):]
+    blocks = []
+    for path in files:
+        blocks.append(f"[{path.stem}]\n{path.read_text(encoding='utf-8')}")
+    return "\n\n".join(blocks)
+
+
 def main():
     print("OCR ready. Commands: ocr <image path> | screen | quit")
     while True:

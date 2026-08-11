@@ -74,6 +74,7 @@
 │   ├── test_app_launcher.py
 │   ├── test_app_refocus.py
 │   ├── test_app_reposition.py
+│   ├── test_capture_session.py
 │   ├── test_click_try.py
 │   ├── test_close_app.py
 │   ├── test_device.py

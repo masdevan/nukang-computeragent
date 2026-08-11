@@ -12,17 +12,21 @@ class ReplyWorker(QThread):
     tool_ready = Signal(str)
     finished = Signal(str, str, str)
 
-    def __init__(self, agent, messages, language):
+    def __init__(self, agent, messages, language, session_id=""):
         super().__init__()
         self.agent = agent
         self.messages = messages
         self.language = language
+        self.session_id = session_id
         self.stop_requested = False
 
     def request_stop(self):
         self.stop_requested = True
 
     def run(self):
+        from skills.screenshot import set_session
+
+        set_session(self.session_id)
         conversation = [{"role": "system", "content": build_system_prompt(self.language)}, *self.messages]
         try:
             client = self.agent.build_client()
