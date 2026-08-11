@@ -8,6 +8,7 @@ from components.confirm import ConfirmDialog
 from datetime import datetime
 from pathlib import Path
 
+from app.services.sessions import session_ranks
 from pages.gallery_page import CAPTURES_DIR, show_capture_dialog
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -124,15 +125,16 @@ class SessionPage(QWidget):
 
     def reload(self):
         self.session_list.clear()
-        sessions = sorted(self.store.list_all(), key=lambda data: data["created_at"], reverse=True)
-        for index, data in enumerate(sessions):
-            self.add_session(data, index)
+        sessions = self.store.list_all()
+        ranks = session_ranks(sessions)
+        for data in sorted(sessions, key=lambda item: item["created_at"], reverse=True):
+            self.add_session(data, ranks[data["id"]])
 
-    def add_session(self, data, index):
+    def add_session(self, data, rank):
         item = QListWidgetItem()
         created_at = datetime.fromisoformat(data["created_at"])
         row = SessionRow(
-            f"Session {index + 1}",
+            f"Session {rank}",
             created_at,
             lambda: self.confirm_delete(data),
             lambda: self.on_open(data["id"]),

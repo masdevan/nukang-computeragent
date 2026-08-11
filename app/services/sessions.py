@@ -6,6 +6,11 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "sessions"
 _id_counter = 0
 
 
+def session_ranks(sessions):
+    ordered = sorted(sessions, key=lambda data: data["created_at"])
+    return {data["id"]: index + 1 for index, data in enumerate(ordered)}
+
+
 class SessionStore:
     def __init__(self, directory=DATA_DIR):
         self.directory = directory
