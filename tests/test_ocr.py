@@ -23,6 +23,21 @@ def test_format_lines_string_passthrough():
     assert ocr.format_lines("OCR unavailable") == "OCR unavailable"
 
 
+def test_format_lines_sorts_by_position():
+    lines = [
+        ("under", (100, 200, 50, 10), (125, 205), []),
+        ("right", (300, 100, 50, 10), (325, 105), []),
+        ("left", (10, 100, 50, 10), (35, 105), []),
+    ]
+    text = ocr.format_lines(lines)
+    assert text.index('"left"') < text.index('"right"') < text.index('"under"')
+
+
+def test_format_lines_skips_word_line_for_single_word():
+    lines = [("back.py", (55, 196, 38, 12), (74, 202), [("back.py", (55, 196, 38, 12), (74, 202))])]
+    assert ocr.format_lines(lines) == '"back.py" box(55, 196, 38, 12) center(74, 202)'
+
+
 def test_write_ocr_sidecar_full_and_capped(tmp_path, monkeypatch):
     monkeypatch.setattr(ocr, "ocr_file", lambda path: fake_lines())
     monkeypatch.setattr(ocr, "OCR_DIR", tmp_path)
@@ -44,3 +59,4 @@ def test_write_ocr_sidecar_truncates(monkeypatch):
     assert feed.startswith("300 lines\n")
     assert "truncated" in feed
     assert len(feed) <= ocr.MAX_MODEL_CHARS + 200
+    assert "\n...[truncated" in feed

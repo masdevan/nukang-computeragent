@@ -2,6 +2,7 @@
 ├── .gitignore
 ├── CODE_OF_CONDUCT.md
 ├── LICENSE
+├── config.json
 ├── main.py
 ├── requirements.txt
 ├── rules.md
@@ -69,10 +70,21 @@
 │   ├── switch_desktop.py
 │   ├── try_click.py
 │   └── window_focus.py
-└── tests/
-    ├── test_device.py
-    ├── test_keyboard.py
-    ├── test_ocr.py
-    ├── test_sessions.py
-    ├── test_settings.py
-    └── test_tools.py
+├── tests/
+│   ├── test_app_launcher.py
+│   ├── test_app_refocus.py
+│   ├── test_app_reposition.py
+│   ├── test_click_try.py
+│   ├── test_close_app.py
+│   ├── test_device.py
+│   ├── test_drag.py
+│   ├── test_file_ops.py
+│   ├── test_keyboard.py
+│   ├── test_ocr.py
+│   ├── test_recovery.py
+│   ├── test_reposition.py
+│   ├── test_sessions.py
+│   ├── test_settings.py
+│   ├── test_smooth_move.py
+│   ├── test_tools.py
+│   └── test_window_controls.py

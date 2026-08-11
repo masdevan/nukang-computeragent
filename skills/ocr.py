@@ -124,10 +124,11 @@ def format_lines(lines):
     if isinstance(lines, str):
         return lines
     output = []
-    for text, box, center, words in lines:
+    for text, box, center, words in sorted(lines, key=lambda item: (item[1][1], item[1][0])):
         output.append(f'"{text}" box{box} center{center}')
-        for word_text, word_box, word_center in words:
-            output.append(f'  "{word_text}" box{word_box} center{word_center}')
+        if len(words) > 1:
+            for word_text, word_box, word_center in words:
+                output.append(f'  "{word_text}" box{word_box} center{word_center}')
     return "\n".join(output)
 
 
@@ -140,7 +141,11 @@ def write_ocr_sidecar(png_path):
     sidecar = OCR_DIR / f"{Path(png_path).stem}.txt"
     sidecar.write_text(text, encoding="utf-8")
     if len(text) > MAX_MODEL_CHARS:
-        text = text[:MAX_MODEL_CHARS] + f"\n...[truncated {len(text) - MAX_MODEL_CHARS} chars]"
+        cut = text.rfind("\n", 0, MAX_MODEL_CHARS)
+        if cut > 0:
+            text = text[:cut] + f"\n...[truncated {len(text) - cut} chars]"
+        else:
+            text = text[:MAX_MODEL_CHARS] + f"\n...[truncated {len(text) - MAX_MODEL_CHARS} chars]"
     return text
 
 
