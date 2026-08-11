@@ -3,6 +3,7 @@ from PySide6.QtGui import QColor, QIcon, QKeyEvent, QPainter, QPen, QTextCharFor
 from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
+import html
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -144,7 +145,16 @@ class ChatPage(QWidget):
 
     def stream_tool(self, line):
         self.clear_thinking()
-        self.append_colored(f"[tool] {line}", TOOL_COLOR)
+        cursor = self.chat_history.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.chat_history.setTextCursor(cursor)
+        box = (
+            '<div style="background-color:#252526; border:1px solid #3a3a3a; '
+            'border-radius:6px; padding:4px 10px; color:#8a8a8a; margin:2px 0;">'
+            f"{html.escape(line)}</div><br/>"
+        )
+        cursor.insertHtml(box)
+        self.chat_history.verticalScrollBar().setValue(self.chat_history.verticalScrollBar().maximum())
 
     def stream_finish(self, text, error, status):
         self.set_streaming(False)
